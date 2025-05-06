@@ -1,0 +1,5 @@
+/bin/zsh: can't open input file: /Users/jonathanferrucci/Documents/reflections_final/run_daily_pnl.sh
+/bin/zsh: can't open input file: /Users/jonathanferrucci/Documents/reflections_final/run_daily_pnl.sh
+/bin/zsh: can't open input file: /Users/jonathanferrucci/Documents/reflections_final/run_daily_pnl.sh
+/bin/zsh: can't open input file: /Users/jonathanferrucci/Documents/reflections_final/run_daily_pnl.sh
+/bin/zsh: can't open input file: /Users/jonathanferrucci/Documents/reflections_final/run_daily_pnl.sh
