@@ -218,3 +218,4 @@ tzdata==2025.2
 urllib3==2.4.0
 websocket-client==1.8.0
 joblib
+scikit-learn
