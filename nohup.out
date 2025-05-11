@@ -1,0 +1,51 @@
+ * Serving Flask app 'mariah-webhook'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://104.248.90.64:5001
+Press CTRL+C to quit
+Already up to date.
+140.82.115.12 - - [09/May/2025 23:17:16] "POST /webhook HTTP/1.1" 200 -
+104.234.115.239 - - [10/May/2025 00:21:59] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x036FbýX7')
+104.234.115.239 - - [10/May/2025 00:21:59] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x036FbýX7\x09ô\x81Öé\x81¯ôCvî4\x07X&±Ø³\x81*u¸×~" HTTPStatus.BAD_REQUEST -
+104.234.115.239 - - [10/May/2025 00:22:17] "GET / HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:24] "GET /manage/account/login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:31] "GET /admin/index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:38] "GET /index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:45] "GET /+CSCOE+/logon.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:52] "GET /cgi-bin/login.cgi HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:59] "GET /login.htm HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:06] "GET /login.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:13] "GET /login.jsp HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:20] "GET /login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:27] "GET /doc/index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:34] "GET /remote/login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:41] "GET /admin/login.asp HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:48] "GET /web/ HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:55] "GET /webpages/login.html HTTP/1.1" 404 -
+64.62.197.30 - - [10/May/2025 01:49:49] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00{\x01\x00\x00w\x03\x03ÜÞ¤QÖ\x834ôÀ©0±\x032æ\x96àc\x86ü'9¼~ê\x87ö\x05\x19.·_\x00\x00\x1aÀ/À+À\x11À\x07À\x13À")
+64.62.197.30 - - [10/May/2025 01:49:49] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03ÜÞ¤QÖ\x834ôÀ©0±\x032æ\x96àc\x86ü'9¼~ê\x87ö\x05\x19.·_\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+106.75.5.138 - - [10/May/2025 04:02:23] "GET / HTTP/1.1" 404 -
+106.75.136.216 - - [10/May/2025 04:07:49] "GET / HTTP/1.1" 404 -
+106.75.136.216 - - [10/May/2025 04:07:49] "GET /favicon.ico HTTP/1.1" 404 -
+147.185.132.174 - - [10/May/2025 09:11:07] "GET / HTTP/1.1" 404 -
+54.37.81.238 - - [10/May/2025 12:25:40] "GET / HTTP/1.1" 404 -
+54.37.81.238 - - [10/May/2025 15:16:50] "GET / HTTP/1.1" 404 -
+52.83.111.57 - - [10/May/2025 15:42:29] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 15:54:05] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 15:56:37] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 16:00:28] code 400, message Bad request syntax ('SSH-2.0-Go')
+18.220.7.77 - - [10/May/2025 16:00:28] "SSH-2.0-Go" HTTPStatus.BAD_REQUEST -
+18.220.7.77 - - [10/May/2025 16:02:05] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00{\x01\x00\x00w\x03\x03\x96CüÌ\x06û\xadÓÄ¦´¨íhØk\x97r/h\x91\x81®óùz\x91=°'\x7få\x00\x00\x1aÀ/À+À\x11À\x07À\x13À")
+18.220.7.77 - - [10/May/2025 16:02:05] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03\x96CüÌ\x06û­ÓÄ¦´¨íhØk\x97r/h\x91\x81®óùz\x91=°'\x7få\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+199.45.155.91 - - [10/May/2025 16:28:08] code 400, message Bad request version ('À\x14À')
+199.45.155.91 - - [10/May/2025 16:28:08] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03ò¼ÔÜÏÁ.+DðÛí\x14·Ü\x7fX\x10E!\x09=D\x8bÁúTëeMmq )é²\x02Þ^º(\x0e\x03Õ\x95n\x9eK\x0b°go\x02\x98£\x1a&\x94à2ý\x8d\x987#\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+199.45.155.91 - - [10/May/2025 16:28:11] "GET / HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:17] "GET / HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:17] code 505, message Invalid HTTP version (2.0)
+199.45.155.91 - - [10/May/2025 16:28:17] "PRI * HTTP/2.0" HTTPStatus.HTTP_VERSION_NOT_SUPPORTED -
+199.45.155.91 - - [10/May/2025 16:28:21] "GET /favicon.ico HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:21] code 400, message Bad request version ('À\x14À')
+199.45.155.91 - - [10/May/2025 16:28:21] "\x16\x03\x01\x00÷\x01\x00\x00ó\x03\x03LÁí®#\x9d\x0b×\x83é¦\x15 \x11g5G+ÄÍa|H\x03PM\x02OýR\x91ð ´\x93àm<uIºßS8r84´õ1çÊ,gdWññézµV\x8e\x97Î\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+135.233.112.24 - - [10/May/2025 22:01:47] "GET /v2/ HTTP/1.1" 404 -

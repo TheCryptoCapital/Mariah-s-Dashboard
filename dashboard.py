@@ -5,6 +5,14 @@ with PnL tracking, trading signals, and various visualization features.
 Author: Jonathan Ferrucci
 """
 
+import os
+os.environ['STREAMLIT_SERVER_ENABLE_CORS'] = 'false'
+os.environ['STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION'] = 'false'
+os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'
+os.environ['STREAMLIT_SERVER_PORT'] = '8501'
+os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+os.environ['STREAMLIT_SERVER_ENABLE_WEBSOCKET_COMPRESSION'] = 'false'
+
 # =======================
 # IMPORTS
 # =======================
@@ -674,7 +682,7 @@ def main():
     
     # Load images
     logo_base64 = get_base64_image("IMG_7006.PNG")
-    brain_base64 = get_base64_image("updatedbrain.png")
+    brain_base64 = get_base64_image("updatedbrain1.png")
     
     # Apply background image
     set_dashboard_background("Screenshot 2025.png")
