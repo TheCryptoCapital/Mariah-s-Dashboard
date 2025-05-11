@@ -37,6 +37,11 @@ from pybit.unified_trading import HTTP
 from datetime import datetime, date
 from streamlit_autorefresh import st_autorefresh
 from PIL import Image
+import math
+import joblib
+import logging
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 
 # Local module imports
 from strategy_mode import get_strategy_params
@@ -89,6 +94,176 @@ session = HTTP(
     api_secret=API_SECRET,
     recv_window=30000  # Increase timeout window (ms)
 )
+
+# =======================
+# ML SIGNAL GENERATOR
+# =======================
+class MLSignalGenerator:
+    def __init__(self, model_path="models/rf_predictor.pkl"):
+        """Initialize the ML signal generator."""
+        self.model_path = model_path
+        self.model = self._load_model()
+        self.scaler = StandardScaler()
+        self.logger = logging.getLogger(__name__)
+        
+    def _load_model(self):
+        """Load the trained model if exists, otherwise return None."""
+        if os.path.exists(self.model_path):
+            try:
+                return joblib.load(self.model_path)
+            except Exception as e:
+                self.logger.error(f"Failed to load model: {e}")
+                return None
+        return None
+        
+    def train_model(self, historical_data, lookback_periods=14, prediction_horizon=5):
+        """Train a new ML model using historical price data."""
+        try:
+            # Create features (technical indicators)
+            df = self._create_features(historical_data)
+            
+            # Create target: 1 if price goes up by 2% within next N periods, 0 otherwise
+            df['future_return'] = df['close'].pct_change(prediction_horizon).shift(-prediction_horizon)
+            df['target'] = (df['future_return'] > 0.02).astype(int)
+            
+            # Drop NaNs and prepare data
+            df = df.dropna()
+            X = df.drop(['target', 'future_return', 'timestamp', 'open', 'high', 'low', 'close', 'volume'], axis=1)
+            y = df['target']
+            
+            # Scale features
+            self.scaler = StandardScaler().fit(X)
+            X_scaled = self.scaler.transform(X)
+            
+            # Train model
+            self.model = RandomForestClassifier(n_estimators=100, random_state=42)
+            self.model.fit(X_scaled, y)
+            
+            # Save model
+            os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+            joblib.dump(self.model, self.model_path)
+            
+            accuracy = self.model.score(X_scaled, y)
+            self.logger.info(f"Model trained with accuracy: {accuracy:.2f}")
+            return accuracy
+            
+        except Exception as e:
+            self.logger.error(f"Error training model: {e}")
+            return None
+            
+    def _create_features(self, df):
+        """Create technical features for the model."""
+        df = df.copy()
+        
+        # Basic indicators
+        df['rsi'] = self._calculate_rsi(df['close'])
+        df['macd'], df['macd_signal'] = self._calculate_macd(df['close'])
+        df['bb_upper'], df['bb_middle'], df['bb_lower'] = self._calculate_bollinger_bands(df['close'])
+        
+        # Price action features
+        df['returns'] = df['close'].pct_change()
+        df['volatility'] = df['returns'].rolling(14).std()
+        df['distance_from_ma50'] = (df['close'] / df['close'].rolling(50).mean()) - 1
+        
+        # Volume features
+        df['volume_change'] = df['volume'].pct_change()
+        df['volume_ma_ratio'] = df['volume'] / df['volume'].rolling(20).mean()
+        
+        # Pattern detection
+        df['higher_high'] = ((df['high'] > df['high'].shift(1)) & 
+                             (df['high'].shift(1) > df['high'].shift(2))).astype(int)
+        df['lower_low'] = ((df['low'] < df['low'].shift(1)) & 
+                          (df['low'].shift(1) < df['low'].shift(2))).astype(int)
+        
+        return df
+        
+    def _calculate_rsi(self, prices, period=14):
+        """Calculate RSI indicator."""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+        
+    def _calculate_macd(self, prices, fast=12, slow=26, signal=9):
+        """Calculate MACD indicator."""
+        ema_fast = prices.ewm(span=fast, adjust=False).mean()
+        ema_slow = prices.ewm(span=slow, adjust=False).mean()
+        macd = ema_fast - ema_slow
+        macd_signal = macd.ewm(span=signal, adjust=False).mean()
+        return macd, macd_signal
+        
+    def _calculate_bollinger_bands(self, prices, period=20, std_dev=2):
+        """Calculate Bollinger Bands."""
+        middle_band = prices.rolling(window=period).mean()
+        std = prices.rolling(window=period).std()
+        upper_band = middle_band + std_dev * std
+        lower_band = middle_band - std_dev * std
+        return upper_band, middle_band, lower_band
+        
+    def get_signal(self, latest_data):
+        """Generate trading signal using the ML model."""
+        if self.model is None:
+            self.logger.warning("ML model not loaded. Cannot generate signal.")
+            return "hold", 0.0
+            
+        try:
+            # Create features for latest data
+            df = self._create_features(latest_data)
+            df = df.dropna()
+            
+            if df.empty:
+                return "hold", 0.0
+                
+            # Extract most recent feature set
+            features = df.drop(['timestamp', 'open', 'high', 'low', 'close', 'volume'], axis=1).iloc[-1:]
+            
+            # Scale features
+            X_scaled = self.scaler.transform(features)
+            
+            # Make prediction
+            pred_proba = self.model.predict_proba(X_scaled)[0]
+            buy_confidence = pred_proba[1]  # Probability of price going up
+            
+            # Determine signal
+            if buy_confidence > 0.7:
+                signal = "buy"
+            elif buy_confidence < 0.3:
+                signal = "sell"
+            else:
+                signal = "hold"
+                
+            return signal, buy_confidence
+            
+        except Exception as e:
+            self.logger.error(f"Error generating ML signal: {e}")
+            return "hold", 0.0
+
+    def get_feature_importance(self):
+        """Return the feature importance from the model."""
+        if self.model is None:
+            return None
+            
+        try:
+            # Get feature names from the latest created features
+            feature_names = self._create_features(pd.DataFrame({
+                'timestamp': [], 'open': [], 'high': [], 'low': [], 'close': [], 'volume': []
+            })).columns.tolist()
+            
+            # Filter out non-feature columns
+            feature_names = [f for f in feature_names if f not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+            
+            # Get feature importances
+            importances = self.model.feature_importances_
+            
+            # Return as dictionary
+            return dict(zip(feature_names[:len(importances)], importances))
+            
+        except Exception as e:
+            self.logger.error(f"Error getting feature importance: {e}")
+            return None
 
 # =======================
 # UTILITY FUNCTIONS
@@ -333,6 +508,35 @@ def log_rsi_trade_to_csv(symbol, side, qty, entry_price, mode="Swing"):
         if not file_exists:
             writer.writeheader()
         writer.writerow(trade_data)
+
+def get_historical_data(symbol, interval, limit=100):
+    """Get historical kline data for ML processing."""
+    try:
+        res = session.get_kline(
+            category="linear",
+            symbol=symbol,
+            interval=interval,
+            limit=limit
+        )["result"]["list"]
+        
+        # Create DataFrame
+        df = pd.DataFrame(res, columns=[
+            "timestamp", "open", "high", "low", "close", "volume", "turnover"
+        ])
+        
+        # Convert types
+        df["open"] = pd.to_numeric(df["open"])
+        df["high"] = pd.to_numeric(df["high"])
+        df["low"] = pd.to_numeric(df["low"])
+        df["close"] = pd.to_numeric(df["close"])
+        df["volume"] = pd.to_numeric(df["volume"])
+        df["timestamp"] = pd.to_datetime(pd.to_numeric(df["timestamp"]), unit='ms')
+        
+        return df
+        
+    except Exception as e:
+        st.error(f"❌ Failed to get historical data for {symbol}: {e}")
+        return pd.DataFrame()
 
 # =======================
 # TRADE DATA FUNCTIONS
@@ -671,6 +875,500 @@ def send_email_with_attachment(subject, body, to_email, filename):
         server.send_message(msg)
 
 # =======================
+# ADVANCED ANALYTICS FUNCTIONS
+# =======================
+def render_advanced_analytics(df_trades, df_pnl):
+    """
+    Render the advanced analytics dashboard
+    
+    Parameters:
+    -----------
+    df_trades : DataFrame
+        Historical trades data
+    df_pnl : DataFrame
+        Daily PnL data
+    """
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.title("🧠 Advanced Analytics")
+    
+    # Create tabs for different analytics views
+    tabs = st.tabs([
+        "📊 Key Metrics", 
+        "📈 Equity Curve", 
+        "🎯 Trade Distribution", 
+        "🧮 Risk Analytics"
+    ])
+    
+    # Prepare data
+    if df_trades.empty:
+        st.warning("No trade data available for analysis.")
+        return
+        
+    # Ensure necessary columns
+    if "Realized PnL ($)" not in df_trades.columns:
+        df_trades["Realized PnL ($)"] = (
+            (df_trades["take_profit"] - df_trades["entry_price"]) * df_trades["qty"]
+            - (df_trades["entry_price"] + df_trades["take_profit"]) * df_trades["qty"] * 0.00075
+        )
+    
+    df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"])
+    
+    # Calculate key metrics
+    total_trades = len(df_trades)
+    winning_trades = len(df_trades[df_trades["Realized PnL ($)"] > 0])
+    losing_trades = len(df_trades[df_trades["Realized PnL ($)"] < 0])
+    win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0
+    
+    profit = df_trades[df_trades["Realized PnL ($)"] > 0]["Realized PnL ($)"].sum()
+    loss = abs(df_trades[df_trades["Realized PnL ($)"] < 0]["Realized PnL ($)"].sum())
+    profit_factor = profit / loss if loss > 0 else float('inf')
+    
+    avg_win = df_trades[df_trades["Realized PnL ($)"] > 0]["Realized PnL ($)"].mean() if winning_trades > 0 else 0
+    avg_loss = df_trades[df_trades["Realized PnL ($)"] < 0]["Realized PnL ($)"].mean() if losing_trades > 0 else 0
+    
+    expectancy = (win_rate/100 * avg_win) + ((1-win_rate/100) * avg_loss) if total_trades > 0 else 0
+    
+    # Calculate rolling equity curve
+    df_trades = df_trades.sort_values("timestamp")
+    df_trades["Cumulative PnL"] = df_trades["Realized PnL ($)"].cumsum()
+    
+    # Calculate drawdowns
+    df_trades["Peak"] = df_trades["Cumulative PnL"].cummax()
+    df_trades["Drawdown"] = df_trades["Cumulative PnL"] - df_trades["Peak"]
+    max_drawdown = abs(df_trades["Drawdown"].min())
+    max_drawdown_pct = (max_drawdown / df_trades["Peak"].max() * 100) if df_trades["Peak"].max() > 0 else 0
+    
+    # Calculate Sharpe Ratio (assuming risk-free rate of 0)
+    if len(df_trades) > 1:
+        returns = df_trades["Realized PnL ($)"].pct_change().dropna()
+        sharpe_ratio = (returns.mean() / returns.std()) * math.sqrt(252) if returns.std() > 0 else 0
+    else:
+        sharpe_ratio = 0
+    
+    # Tab 1: Key Metrics
+    with tabs[0]:
+        st.subheader("Key Performance Metrics")
+        
+        # Create 3x3 grid of metrics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Total Trades", f"{total_trades}")
+            st.metric("Win Rate", f"{win_rate:.2f}%")
+            st.metric("Profit Factor", f"{profit_factor:.2f}")
+            
+        with col2:
+            st.metric("Net Profit", f"${df_trades['Realized PnL ($)'].sum():.2f}")
+            st.metric("Average Win", f"${avg_win:.2f}")
+            st.metric("Average Loss", f"${avg_loss:.2f}")
+            
+        with col3:
+            st.metric("Max Drawdown", f"${max_drawdown:.2f} ({max_drawdown_pct:.2f}%)")
+            st.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+            st.metric("Expectancy", f"${expectancy:.2f}")
+        
+        # Show trades by symbol
+        st.subheader("Performance by Symbol")
+        
+        symbol_metrics = df_trades.groupby("symbol").agg({
+            "Realized PnL ($)": "sum",
+            "symbol": "count"
+        }).rename(columns={"symbol": "Trade Count"})
+        
+        symbol_win_rates = []
+        for symbol in symbol_metrics.index:
+            symbol_df = df_trades[df_trades["symbol"] == symbol]
+            wins = len(symbol_df[symbol_df["Realized PnL ($)"] > 0])
+            total = len(symbol_df)
+            win_rate = (wins / total * 100) if total > 0 else 0
+            symbol_win_rates.append(win_rate)
+        
+        symbol_metrics["Win Rate (%)"] = symbol_win_rates
+        st.dataframe(symbol_metrics.sort_values("Realized PnL ($)", ascending=False))
+        
+        # Monthly performance
+        st.subheader("Monthly Performance")
+        df_trades["Month"] = df_trades["timestamp"].dt.to_period("M")
+        monthly_pnl = df_trades.groupby("Month")["Realized PnL ($)"].sum().reset_index()
+        monthly_pnl["Month"] = monthly_pnl["Month"].astype(str)
+        
+        fig = go.Figure()
+        colors = ["green" if x >= 0 else "red" for x in monthly_pnl["Realized PnL ($)"]]
+        fig.add_trace(go.Bar(
+            x=monthly_pnl["Month"],
+            y=monthly_pnl["Realized PnL ($)"],
+            marker_color=colors
+        ))
+        fig.update_layout(title="Monthly Performance", xaxis_title="Month", yaxis_title="PnL ($)")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 2: Equity Curve
+    with tabs[1]:
+        st.subheader("Equity Curve and Drawdowns")
+        
+        # Create subplots for equity curve and drawdowns
+        fig = make_subplots(
+            rows=2, 
+            cols=1, 
+            shared_xaxes=True,
+            row_heights=[0.7, 0.3],
+            subplot_titles=("Equity Curve", "Drawdowns")
+        )
+        
+        # Add equity curve trace
+        fig.add_trace(
+            go.Scatter(
+                x=df_trades["timestamp"], 
+                y=df_trades["Cumulative PnL"],
+                mode="lines",
+                name="Equity",
+                line=dict(color="#00fff5", width=2)
+            ),
+            row=1, col=1
+        )
+        
+        # Add drawdown trace
+        fig.add_trace(
+            go.Scatter(
+                x=df_trades["timestamp"], 
+                y=df_trades["Drawdown"],
+                mode="lines",
+                name="Drawdown",
+                line=dict(color="red", width=2),
+                fill="tozeroy"
+            ),
+            row=2, col=1
+        )
+        
+        fig.update_layout(height=600, showlegend=True)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Rolling metrics
+        st.subheader("Rolling Performance")
+        
+        # Calculate rolling metrics
+        window = st.slider("Rolling Window Size", min_value=5, max_value=50, value=20)
+        
+        df_trades["Rolling Win Rate"] = df_trades["Realized PnL ($)"].apply(
+            lambda x: 1 if x > 0 else 0
+        ).rolling(window).mean() * 100
+        
+        df_trades["Rolling PnL"] = df_trades["Realized PnL ($)"].rolling(window).sum()
+        
+        # Plot rolling metrics
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df_trades["timestamp"],
+                y=df_trades["Rolling Win Rate"],
+                mode="lines",
+                name="Win Rate (%)",
+                line=dict(color="green", width=2)
+            ),
+            secondary_y=True
+        )
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df_trades["timestamp"],
+                y=df_trades["Rolling PnL"],
+                mode="lines",
+                name="PnL ($)",
+                line=dict(color="blue", width=2)
+            ),
+            secondary_y=False
+        )
+        
+        fig.update_layout(
+            title=f"{window}-Trade Rolling Metrics",
+            xaxis_title="Date",
+            yaxis_title="PnL ($)",
+            yaxis2_title="Win Rate (%)"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 3: Trade Distribution
+    with tabs[2]:
+        st.subheader("Trade Distribution Analysis")
+        
+        # PnL distribution
+        fig = go.Figure()
+        
+        fig.add_trace(go.Histogram(
+            x=df_trades["Realized PnL ($)"],
+            nbinsx=20,
+            marker_color=["green" if x >= 0 else "red" for x in df_trades["Realized PnL ($)"]],
+            opacity=0.7,
+            name="PnL Distribution"
+        ))
+        
+        fig.update_layout(
+            title="PnL Distribution",
+            xaxis_title="PnL ($)",
+            yaxis_title="Frequency"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Trade timing analysis
+        st.subheader("Trade Timing Analysis")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Trades by day of week
+            df_trades["Day of Week"] = df_trades["timestamp"].dt.day_name()
+            day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            
+            day_counts = df_trades.groupby("Day of Week").size().reindex(day_order, fill_value=0)
+            day_pnl = df_trades.groupby("Day of Week")["Realized PnL ($)"].sum().reindex(day_order, fill_value=0)
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=day_counts.index, 
+                y=day_counts.values,
+                name="Trade Count"
+            ))
+            
+            fig.update_layout(
+                title="Trades by Day of Week",
+                xaxis_title="Day",
+                yaxis_title="Count"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+        with col2:
+            # PnL by day of week
+            fig = go.Figure()
+            
+            colors = ["green" if x >= 0 else "red" for x in day_pnl.values]
+            fig.add_trace(go.Bar(
+                x=day_pnl.index, 
+                y=day_pnl.values,
+                marker_color=colors,
+                name="PnL"
+            ))
+            
+            fig.update_layout(
+                title="PnL by Day of Week",
+                xaxis_title="Day",
+                yaxis_title="PnL ($)"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Trade duration analysis (if we have exit timestamps)
+        if "exit_timestamp" in df_trades.columns:
+            st.subheader("Trade Duration Analysis")
+            
+            df_trades["Duration"] = (df_trades["exit_timestamp"] - df_trades["timestamp"]).dt.total_seconds() / 3600  # hours
+            
+            fig = go.Figure()
+            
+            fig.add_trace(go.Scatter(
+                x=df_trades["Duration"],
+                y=df_trades["Realized PnL ($)"],
+                mode="markers",
+                marker=dict(
+                    size=10,
+                    color=df_trades["Realized PnL ($)"],
+                    colorscale="RdYlGn",
+                    showscale=True,
+                    colorbar=dict(title="PnL ($)")
+                ),
+                text=df_trades["symbol"],
+                name="Trade Duration vs PnL"
+            ))
+            
+            fig.update_layout(
+                title="Trade Duration vs PnL",
+                xaxis_title="Duration (hours)",
+                yaxis_title="PnL ($)"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Tab 4: Risk Analytics
+    with tabs[3]:
+        st.subheader("Risk Analytics")
+        
+        # Calculate risk of ruin
+        initial_capital = st.number_input("Initial Capital ($)", value=10000, min_value=100)
+        risk_per_trade_pct = st.slider("Risk Per Trade (%)", min_value=0.5, max_value=5.0, value=2.0, step=0.1)
+        
+        # Simple Kelly criterion calculation
+        if win_rate > 0 and avg_win != 0 and avg_loss != 0:
+            w = win_rate / 100
+            r = abs(avg_win / avg_loss)
+            kelly_pct = (w*r - (1-w)) / r * 100
+            optimal_f = max(0, kelly_pct) / 2  # Half-Kelly for safety
+            
+            st.metric("Kelly Criterion", f"{kelly_pct:.2f}%")
+            st.metric("Half Kelly (Recommended Risk %)", f"{optimal_f:.2f}%")
+        
+        # Monte Carlo simulation
+        st.subheader("Monte Carlo Simulation")
+        
+        num_simulations = st.slider("Number of Simulations", min_value=100, max_value=1000, value=200)
+        num_trades = st.slider("Number of Future Trades", min_value=50, max_value=500, value=100)
+        
+        # Run Monte Carlo simulation
+        np.random.seed(42)  # For reproducibility
+        
+        # Get win rate and PnL distribution for sampling
+        win_prob = win_rate / 100
+        win_pnl = df_trades[df_trades["Realized PnL ($)"] > 0]["Realized PnL ($)"].values
+        loss_pnl = df_trades[df_trades["Realized PnL ($)"] < 0]["Realized PnL ($)"].values
+        
+        # If no wins or losses, use averages
+        if len(win_pnl) == 0:
+            win_pnl = np.array([10])
+        if len(loss_pnl) == 0:
+            loss_pnl = np.array([-10])
+        
+        # Run simulations
+        all_equity_curves = []
+        all_max_drawdowns = []
+        all_final_equities = []
+        
+        for sim in range(num_simulations):
+            equity = initial_capital
+            equity_curve = [initial_capital]
+            peak = initial_capital
+            
+            for _ in range(num_trades):
+                # Determine if win or loss
+                if np.random.random() < win_prob:
+                    # Win: sample from win distribution
+                    pnl = np.random.choice(win_pnl)
+                else:
+                    # Loss: sample from loss distribution
+                    pnl = np.random.choice(loss_pnl)
+                
+                equity += pnl
+                equity = max(0, equity)  # Prevent negative equity
+                equity_curve.append(equity)
+                
+                # Track drawdown
+                peak = max(peak, equity)
+            
+            all_equity_curves.append(equity_curve)
+            all_final_equities.append(equity)
+            
+            # Calculate max drawdown for this simulation
+            peaks = pd.Series(equity_curve).cummax()
+            drawdowns = pd.Series(equity_curve) - peaks
+            max_dd = abs(drawdowns.min())
+            all_max_drawdowns.append(max_dd)
+        
+        # Calculate statistics from simulations
+        median_equity = np.median(all_final_equities)
+        pct_5 = np.percentile(all_final_equities, 5)
+        pct_95 = np.percentile(all_final_equities, 95)
+        
+        profit_prob = sum(1 for eq in all_final_equities if eq > initial_capital) / num_simulations * 100
+        
+        # Display results
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Median Final Equity", f"${median_equity:.2f}")
+            
+        with col2:
+            st.metric("5th Percentile", f"${pct_5:.2f}")
+            
+        with col3:
+            st.metric("95th Percentile", f"${pct_95:.2f}")
+            
+        st.metric("Probability of Profit", f"{profit_prob:.2f}%")
+        
+        # Plot Monte Carlo simulation results
+        fig = go.Figure()
+        
+        # Plot each simulation
+        for i, curve in enumerate(all_equity_curves):
+            if i == 0:  # First curve with visible legend
+                fig.add_trace(go.Scatter(
+                    y=curve,
+                    mode="lines",
+                    line=dict(color="rgba(0, 255, 245, 0.1)"),
+                    name="Simulation Path"
+                ))
+            else:  # Rest without legend entries
+                fig.add_trace(go.Scatter(
+                    y=curve,
+                    mode="lines",
+                    line=dict(color="rgba(0, 255, 245, 0.1)"),
+                    showlegend=False
+                ))
+        
+        # Add median curve
+        median_curve = np.median(np.array(all_equity_curves), axis=0)
+        fig.add_trace(go.Scatter(
+            y=median_curve,
+            mode="lines",
+            line=dict(color="white", width=2),
+            name="Median Path"
+        ))
+        
+        fig.update_layout(
+            title=f"Monte Carlo Simulation ({num_simulations} runs)",
+            xaxis_title="Trade Number",
+            yaxis_title="Account Equity ($)"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Drawdown distribution
+        fig = go.Figure()
+        
+        fig.add_trace(go.Histogram(
+            x=all_max_drawdowns,
+            nbinsx=20,
+            marker_color="red",
+            opacity=0.7,
+            name="Drawdown Distribution"
+        ))
+        
+        median_dd = np.median(all_max_drawdowns)
+        pct_95_dd = np.percentile(all_max_drawdowns, 95)
+        
+        fig.add_vline(
+            x=median_dd,
+            line_width=2,
+            line_dash="dash",
+            line_color="white",
+            annotation_text="Median"
+        )
+        
+        fig.add_vline(
+            x=pct_95_dd,
+            line_width=2,
+            line_dash="dash",
+            line_color="yellow",
+            annotation_text="95th percentile"
+        )
+        
+        fig.update_layout(
+            title="Maximum Drawdown Distribution",
+            xaxis_title="Maximum Drawdown ($)",
+            yaxis_title="Frequency"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Median Max Drawdown", f"${median_dd:.2f}")
+        with col2:
+            st.metric("95th Percentile Max Drawdown", f"${pct_95_dd:.2f}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# =======================
 # MAIN DASHBOARD LAYOUT
 # =======================
 def main():
@@ -730,6 +1428,7 @@ def main():
             [
                 "📆 Daily PnL",
                 "📈 Performance Trends",
+                "📊 Advanced Analytics", # New option
                 "📆 Filter by Date",
                 "📰 Crypto News",
                 "📡 On-Chain Data",
@@ -1355,6 +2054,10 @@ def main():
         render_daily_pnl()
     elif more_tab == "📈 Performance Trends":
         render_performance_trends()
+    elif more_tab == "📊 Advanced Analytics": # New tab
+        # Load data for advanced analytics
+        df_daily_pnl = pd.read_csv(DAILY_PNL_SPLIT_FILE) if os.path.exists(DAILY_PNL_SPLIT_FILE) else pd.DataFrame()
+        render_advanced_analytics(df_trades, df_daily_pnl)
     elif more_tab == "📆 Filter by Date":
         render_filter_by_date()
     elif more_tab == "📰 Crypto News":
@@ -1366,10 +2069,17 @@ def main():
 # MORE TOOLS TAB FUNCTIONS
 # =======================
 def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
-    """Render the RSI Signal Scanner tab."""
+    """Render the Signal Scanner tab with ML enhancement."""
     with st.container():
         st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.subheader("📡 RSI Signal Scanner")
+        st.subheader("📡 Signal Scanner")
+        
+        # Add ML option
+        signal_type = st.radio(
+            "Signal Type",
+            ["RSI Only", "ML Enhanced"],
+            index=0
+        )
         
         # Risk & Trade Settings
         interval = st.selectbox(
@@ -1386,6 +2096,20 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
         
         st.markdown("---")
         
+        # Train ML model option
+        if signal_type == "ML Enhanced":
+            if st.button("🧠 Train ML Model"):
+                with st.spinner("Training model..."):
+                    for symbol in symbols:
+                        historical_data = get_historical_data(symbol, interval, limit=500)
+                        if not historical_data.empty:
+                            ml_generator = MLSignalGenerator(model_path=f"models/{symbol}_{interval}_model.pkl")
+                            accuracy = ml_generator.train_model(historical_data)
+                            if accuracy:
+                                st.success(f"✓ Model trained for {symbol} with accuracy: {accuracy:.2f}")
+                            else:
+                                st.error(f"Failed to train model for {symbol}")
+        
         for symbol in symbols:
             # Daily loss guard
             if check_max_daily_loss(df_bot_closed, df_manual_closed):
@@ -1393,52 +2117,95 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                 continue
             
             try:
-                # Scan for RSI signal
-                rsi_value, trigger = check_rsi_signal(symbol=symbol, interval=interval, mode=mode)
+                # Traditional RSI signal
+                rsi_value, rsi_trigger = check_rsi_signal(symbol=symbol, interval=interval, mode=mode)
+                
+                # Default to RSI-only trigger
+                trigger = rsi_trigger
+                
+                # Add ML signal if selected
+                if signal_type == "ML Enhanced":
+                    # Get historical data for ML
+                    historical_data = get_historical_data(symbol, interval, limit=100)
+                    
+                    if not historical_data.empty:
+                        # Initialize ML signal generator
+                        ml_generator = MLSignalGenerator(model_path=f"models/{symbol}_{interval}_model.pkl")
+                        
+                        # Get ML signal
+                        ml_signal, confidence = ml_generator.get_signal(historical_data)
+                        
+                        # Show both signals
+                        st.write(f"✅ {symbol} RSI: {rsi_value:.2f}, ML Signal: {ml_signal} (Confidence: {confidence:.2f})")
+                        
+                        # Use combined signal logic
+                        trigger = rsi_trigger and (ml_signal == "buy") and (confidence > 0.65)
+                        
+                        # Show feature importance
+                        if st.checkbox(f"Show ML feature importance for {symbol}", key=f"feat_imp_{symbol}"):
+                            features = ml_generator.get_feature_importance()
+                            if features:
+                                st.write("Feature importance:")
+                                features_df = pd.DataFrame({
+                                    'Feature': list(features.keys()),
+                                    'Importance': list(features.values())
+                                }).sort_values('Importance', ascending=False)
+                                st.dataframe(features_df)
                 
                 if trigger:
                     # Use mode-specific SL/TP from strategy_mode.py
                     sl_pct, tp_pct, rsi_overbought, rsi_oversold = get_strategy_params(mode)
-                    entry_price = rsi_value  # If your scanner returns price, adjust accordingly
+                    entry_price = float(historical_data["close"].iloc[-1]) if 'historical_data' in locals() else rsi_value
                     stop_loss = entry_price * (1 - sl_pct / 100)
                     take_profit = entry_price * (1 + tp_pct / 100)
                     
                     # Get risk percent from strategy function
-                    risk_percent = 2.0  # Default value, replace with actual function if available
+                    risk_percent = risk_percent  # Using the sidebar value
                     
                     qty = position_size_from_risk(account_balance, risk_percent, entry_price, stop_loss)
                     
                     # Mariah speaks before placing the trade
-                    mariah_speak(
-                        f"Entering a {mode.lower()} trade on {symbol}. "
-                        f"Stop loss at {sl_pct} percent. Take profit at {tp_pct} percent. "
-                        f"Risking {risk_percent} percent of capital."
-                    )
+                    if signal_type == "ML Enhanced":
+                        mariah_speak(
+                            f"ML enhanced signal detected. Entering a {mode.lower()} trade on {symbol}. "
+                            f"Stop loss at {sl_pct} percent. Take profit at {tp_pct} percent."
+                        )
+                    else:
+                        mariah_speak(
+                            f"Entering a {mode.lower()} trade on {symbol}. "
+                            f"Stop loss at {sl_pct} percent. Take profit at {tp_pct} percent. "
+                            f"Risking {risk_percent} percent of capital."
+                        )
                     
-                    # Place order
-                    order = session.place_order(
-                        category="linear",
-                        symbol=symbol,
-                        side="Buy",
-                        orderType="Market",
-                        qty=round(qty, 3),
-                        timeInForce="GoodTillCancel",
-                        reduceOnly=False,
-                        closeOnTrigger=False
-                    )
-                    
-                    # Log trade
-                    log_rsi_trade_to_csv(
-                        symbol=symbol,
-                        side="Buy",
-                        qty=qty,
-                        entry_price=entry_price,
-                        mode=mode
-                    )
-                    
-                    st.success(f"✅ RSI trade executed: {symbol} @ ${entry_price:.2f}")
+                    # Place order button
+                    if st.button(f"🚀 Execute Trade for {symbol}", key=f"exec_{symbol}"):
+                        # Place order
+                        order = session.place_order(
+                            category="linear",
+                            symbol=symbol,
+                            side="Buy",
+                            orderType="Market",
+                            qty=round(qty, 3),
+                            timeInForce="GoodTillCancel",
+                            reduceOnly=False,
+                            closeOnTrigger=False
+                        )
+                        
+                        # Log trade
+                        log_rsi_trade_to_csv(
+                            symbol=symbol,
+                            side="Buy",
+                            qty=qty,
+                            entry_price=entry_price,
+                            mode=mode
+                        )
+                        
+                        st.success(f"✅ {signal_type} trade executed: {symbol} @ ${entry_price:.2f}")
                 else:
-                    st.info(f"No RSI signal for {symbol}.")
+                    if signal_type == "RSI Only":
+                        st.info(f"No RSI signal for {symbol}.")
+                    elif signal_type == "ML Enhanced":
+                        st.info(f"No combined signal for {symbol}.")
                     
             except Exception as e:
                 st.error(f"❌ Error for {symbol}: {e}")
