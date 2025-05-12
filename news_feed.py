@@ -1,2 +1,10 @@
+import requests
+
 def get_crypto_news():
-    return [{"title": "BTC pumps 10% on ETF approval", "url": "#", "published": "Now", "source": "CoinDesk"}]
+    try:
+        url = "https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true"
+        response = requests.get(url)
+        articles = response.json().get("results", [])
+        return articles
+    except Exception as e:
+        return []

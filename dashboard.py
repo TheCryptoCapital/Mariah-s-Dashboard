@@ -42,6 +42,9 @@ import joblib
 import logging
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+from news_feed import get_crypto_news
+from onchain_feed import get_eth_gas, get_block_info
+
 
 # Local module imports
 from strategy_mode import get_strategy_params
