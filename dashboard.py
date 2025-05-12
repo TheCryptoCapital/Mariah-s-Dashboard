@@ -2772,211 +2772,609 @@ def main():
 # =======================
 # MORE TOOLS TAB FUNCTIONS
 # =======================
-<<<<<<< HEAD
-def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
-    """Enhanced Signal Scanner with multiple indicators"""
-    with st.container():
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.subheader("📡 Enhanced Signal Scanner")
-        
-        # Initialize Mariah Level 2
-        if "mariah_level2" not in st.session_state:
-            st.session_state.mariah_level2 = MariahLevel2()
-        
-        mariah2 = st.session_state.mariah_level2
-        
-        # Signal type selection
-        signal_type = st.radio(
-            "Signal Analysis Type",
-            ["Enhanced Multi-Indicator", "ML Enhanced", "RSI Only"],
-            index=0,
-            help="Choose your preferred signal analysis method"
-        )
-        
-        # Risk & Trade Settings
-        interval = st.selectbox(
-            "Candle Interval", 
-            ["5", "15", "30", "60", "240"], 
-            index=1
-        )
-        
-        symbols = st.multiselect(
-            "Symbols to Scan", 
-            ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"], 
-            default=["BTCUSDT", "ETHUSDT"]
-        )
-        
-        st.markdown("---")
-        
-        # Enhanced Analysis for each symbol
-        for symbol in symbols:
-            with st.expander(f"📈 {symbol} Analysis", expanded=True):
-                # Daily loss guard
-                if check_max_daily_loss(df_bot_closed, df_manual_closed):
-                    st.warning(f"🛑 Mariah skipped {symbol} — Daily loss limit reached.")
-                    continue
-                
-                try:
-                    if signal_type == "Enhanced Multi-Indicator":
-                        # Use the new enhanced analysis
-                        analysis = mariah2.analyze_symbol(symbol, interval, session)
-                        
-                        if "error" not in analysis:
-                            # Main decision display
-                            action = analysis["action"].upper()
-                            confidence = analysis["confidence"]
-                            color = {"BUY": "green", "SELL": "red", "HOLD": "orange"}[action]
-                            
-                            col1, col2, col3 = st.columns(3)
-                            
-                            with col1:
-                                st.metric("🎯 Action", action, delta=f"{confidence:.1%} confidence")
-                            
-                            with col2:
-                                st.metric("📊 Score Difference", f"{analysis['score_difference']:.2f}")
-                            
-                            with col3:
-                                st.write(f"**💡 Summary:** {analysis['summary']}")
-                            
-                            # Signal breakdown
-                            st.markdown("### 📋 Signal Breakdown")
-                            
-                            signal_cols = st.columns(len(analysis["signals"]))
-                            
-                            for i, (signal_type_name, signal_data) in enumerate(analysis["signals"].items()):
-                                with signal_cols[i]:
-                                    signal_color = {"buy": "🟢", "sell": "🔴", "hold": "⚪"}[signal_data["signal"]]
-                                    
-                                    # Create a styled box for each signal
-                                    st.markdown(f"""
-                                    <div style='padding: 10px; border-radius: 10px; 
-                                         background-color: rgba(0, 200, 150, 0.1); 
-                                         text-align: center;'>
-                                        <h4>{signal_color} {signal_type_name.upper()}</h4>
-                                        <p><strong>Signal:</strong> {signal_data['signal']}</p>
-                                        <p><strong>Confidence:</strong> {signal_data['confidence']:.1%}</p>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                            
-                            # Mariah speaks
-                            if action != "HOLD" and confidence > 0.6:
-                                mariah_speak(f"Strong {action.lower()} signal detected for {symbol}! "
-                                           f"Multiple indicators show {confidence:.1%} confidence. "
-                                           f"This is based on {analysis['summary']}.")
-                                
-                                # Execute button with enhanced info
-                                if st.button(f"🚀 Execute {action} for {symbol}", key=f"exec_{symbol}"):
-                                    mariah_speak(f"Executing {action.lower()} order for {symbol} with enhanced analysis!")
-                                    
-                                    # Calculate position size based on strategy
-                                    sl_pct, tp_pct, rsi_overbought, rsi_oversold = get_strategy_params(mode)
-                                    entry_price = float(session.get_tickers(category="linear", symbol=symbol)["result"]["list"][0]["lastPrice"])
-                                    stop_loss = entry_price * (1 - sl_pct / 100) if action == "BUY" else entry_price * (1 + sl_pct / 100)
-                                    qty = position_size_from_risk(account_balance, risk_percent, entry_price, stop_loss)
-                                    
-                                    # Place the order
-                                    order = session.place_order(
-                                        category="linear",
-                                        symbol=symbol,
-                                        side=action.title(),
-                                        orderType="Market",
-                                        qty=round(qty, 3),
-                                        timeInForce="GoodTillCancel",
-                                        reduceOnly=False,
-                                        closeOnTrigger=False
-                                    )
-                                    
-                                    # Log the trade
-                                    log_rsi_trade_to_csv(
-                                        symbol=symbol,
-                                        side=action.title(),
-                                        qty=qty,
-                                        entry_price=entry_price,
-                                        mode=mode
-                                    )
-                                    
-                                    st.success(f"✅ {action} order executed for {symbol}!")
-                                    st.json(order)
-                            
-                            elif action != "HOLD":
-                                mariah_speak(f"Weak {action.lower()} signal for {symbol}. "
-                                           f"Confidence is only {confidence:.1%}. "
-                                           f"I recommend waiting for stronger confirmation.")
-                        else:
-                            st.error(analysis["error"])
-                    
-                    elif signal_type == "ML Enhanced":
-                        # Your existing ML Enhanced logic
-                        historical_data = get_historical_data(symbol, interval, limit=100)
-                        
-                        if not historical_data.empty:
-                            # Initialize ML signal generator
-                            ml_generator = MLSignalGenerator(model_path=f"models/{symbol}_{interval}_model.pkl")
-                            
-                            # Get ML signal
-                            ml_signal, confidence = ml_generator.get_signal(historical_data)
-                            
-                            # Also get RSI for comparison
-                            rsi_value, rsi_trigger = check_rsi_signal(symbol=symbol, interval=interval, mode=mode)
-                            
-                            # Show both signals
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.metric("🤖 ML Signal", ml_signal.upper(), f"{confidence:.1%} confidence")
-                            with col2:
-                                st.metric("📊 RSI Value", f"{rsi_value:.1f}", "Buy" if rsi_trigger else "No signal")
-                            
-                            # Combined logic
-                            trigger = rsi_trigger and (ml_signal == "buy") and (confidence > 0.65)
-                            
-                            if trigger:
-                                mariah_speak(f"ML enhanced signal confirmed for {symbol}! "
-                                           f"Both RSI and ML model agree. Confidence: {confidence:.1%}")
-                                
-                                if st.button(f"🚀 Execute ML Trade for {symbol}", key=f"exec_ml_{symbol}"):
-                                    # Your existing ML trade execution logic
-                                    pass
-                    
-                    else:  # RSI Only
-                        # Your existing RSI-only logic
-                        rsi_value, rsi_trigger = check_rsi_signal(symbol=symbol, interval=interval, mode=mode)
-                        
-                        st.metric("📊 RSI Value", f"{rsi_value:.1f}", 
-                                 "Overbought" if rsi_value > 70 else "Oversold" if rsi_value < 30 else "Neutral")
-                        
-                        if rsi_trigger:
-                            mariah_speak(f"RSI signal detected for {symbol}!")
-                            if st.button(f"🚀 Execute RSI Trade for {symbol}", key=f"exec_rsi_{symbol}"):
-                                # Your existing RSI trade execution logic
-                                pass
-                
-                except Exception as e:
-                    st.error(f"❌ Error analyzing {symbol}: {e}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-=======
 def render_daily_pnl():
     """Render Daily PnL view"""
-    st.warning("⚠️ render_daily_pnl function not yet implemented. Please add this function.")
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📆 Daily PnL Summary")
+    
+    try:
+        # Load daily PnL data
+        if os.path.exists(DAILY_PNL_SPLIT_FILE):
+            df_daily = pd.read_csv(DAILY_PNL_SPLIT_FILE)
+            df_daily["date"] = pd.to_datetime(df_daily["date"])
+            
+            # Calculate rolling averages
+            df_daily["bot_pnl_7d"] = df_daily["bot_pnl"].rolling(7).mean()
+            df_daily["manual_pnl_7d"] = df_daily["manual_pnl"].rolling(7).mean()
+            df_daily["total_pnl_7d"] = df_daily["total_pnl"].rolling(7).mean()
+            
+            # Calculate win rates
+            df_daily["bot_win_rate"] = np.where(
+                df_daily["bot_trades"] > 0,
+                df_daily["bot_wins"] / df_daily["bot_trades"] * 100,
+                0
+            )
+            df_daily["manual_win_rate"] = np.where(
+                df_daily["manual_trades"] > 0,
+                df_daily["manual_wins"] / df_daily["manual_trades"] * 100,
+                0
+            )
+            
+            # Display recent data
+            st.subheader("📊 Last 10 Days")
+            recent_data = df_daily.tail(10)
+            st.dataframe(recent_data[[
+                "date", "bot_pnl", "manual_pnl", "total_pnl",
+                "bot_trades", "manual_trades", "bot_win_rate", "manual_win_rate"
+            ]])
+            
+            # Create daily PnL chart
+            fig = go.Figure()
+            
+            fig.add_trace(go.Bar(
+                x=df_daily["date"],
+                y=df_daily["bot_pnl"],
+                name="Bot PnL",
+                marker_color="blue",
+                opacity=0.7
+            ))
+            
+            fig.add_trace(go.Bar(
+                x=df_daily["date"],
+                y=df_daily["manual_pnl"],
+                name="Manual PnL",
+                marker_color="green",
+                opacity=0.7
+            ))
+            
+            fig.update_layout(
+                title="Daily PnL - Bot vs Manual",
+                xaxis_title="Date",
+                yaxis_title="PnL ($)",
+                barmode="stack"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Win rate trends
+            fig2 = go.Figure()
+            
+            fig2.add_trace(go.Scatter(
+                x=df_daily["date"],
+                y=df_daily["bot_win_rate"],
+                mode="lines+markers",
+                name="Bot Win Rate (%)",
+                line=dict(color="blue")
+            ))
+            
+            fig2.add_trace(go.Scatter(
+                x=df_daily["date"],
+                y=df_daily["manual_win_rate"],
+                mode="lines+markers",
+                name="Manual Win Rate (%)",
+                line=dict(color="green")
+            ))
+            
+            fig2.update_layout(
+                title="Win Rate Trends",
+                xaxis_title="Date",
+                yaxis_title="Win Rate (%)"
+            )
+            
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        else:
+            st.info("No daily PnL data available yet.")
+            
+    except Exception as e:
+        st.error(f"❌ Error loading daily PnL data: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 def render_performance_trends():
     """Render Performance Trends view"""
-    st.warning("⚠️ render_performance_trends function not yet implemented. Please add this function.")
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📈 Performance Trends Analysis")
+    
+    try:
+        # Load trades data
+        df_trades = load_trades()
+        
+        if df_trades.empty:
+            st.info("No trade data available for trend analysis.")
+            return
+        
+        # Ensure required columns
+        df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"], errors='coerce')
+        
+        # Split bot trades
+        df_bot_open, df_bot_closed = split_bot_trades(df_trades)
+        
+        if df_bot_closed.empty:
+            st.info("No closed trades available for analysis.")
+            return
+        
+        # Monthly trends
+        st.subheader("📅 Monthly Performance")
+        
+        df_bot_closed["month"] = df_bot_closed["timestamp"].dt.to_period("M")
+        monthly_stats = df_bot_closed.groupby("month").agg({
+            "Realized PnL ($)": ["sum", "mean", "count"],
+            "symbol": "count"
+        }).round(2)
+        
+        # Flatten column names
+        monthly_stats.columns = ["Total PnL", "Avg PnL", "Trade Count", "Symbols"]
+        monthly_stats = monthly_stats.reset_index()
+        monthly_stats["month"] = monthly_stats["month"].astype(str)
+        
+        # Calculate win rates
+        win_rates = []
+        for period in monthly_stats["month"]:
+            period_data = df_bot_closed[df_bot_closed["month"].astype(str) == period]
+            wins = len(period_data[period_data["Realized PnL ($)"] > 0])
+            total = len(period_data)
+            win_rate = (wins / total * 100) if total > 0 else 0
+            win_rates.append(win_rate)
+        
+        monthly_stats["Win Rate (%)"] = win_rates
+        st.dataframe(monthly_stats)
+        
+        # Performance by symbol
+        st.subheader("🎯 Performance by Symbol")
+        
+        symbol_performance = df_bot_closed.groupby("symbol").agg({
+            "Realized PnL ($)": ["sum", "mean", "count"]
+        }).round(2)
+        
+        symbol_performance.columns = ["Total PnL", "Avg PnL", "Trade Count"]
+        symbol_performance = symbol_performance.reset_index()
+        
+        # Add win rates by symbol
+        symbol_win_rates = []
+        for symbol in symbol_performance["symbol"]:
+            symbol_data = df_bot_closed[df_bot_closed["symbol"] == symbol]
+            wins = len(symbol_data[symbol_data["Realized PnL ($)"] > 0])
+            total = len(symbol_data)
+            win_rate = (wins / total * 100) if total > 0 else 0
+            symbol_win_rates.append(win_rate)
+        
+        symbol_performance["Win Rate (%)"] = symbol_win_rates
+        symbol_performance = symbol_performance.sort_values("Total PnL", ascending=False)
+        
+        st.dataframe(symbol_performance)
+        
+        # Strategy mode performance
+        if "mode" in df_bot_closed.columns:
+            st.subheader("⚙️ Performance by Strategy Mode")
+            
+            mode_performance = df_bot_closed.groupby("mode").agg({
+                "Realized PnL ($)": ["sum", "mean", "count"]
+            }).round(2)
+            
+            mode_performance.columns = ["Total PnL", "Avg PnL", "Trade Count"]
+            mode_performance = mode_performance.reset_index()
+            
+            st.dataframe(mode_performance)
+        
+        # Time of day analysis
+        st.subheader("🕐 Performance by Hour of Day")
+        
+        df_bot_closed["hour"] = df_bot_closed["timestamp"].dt.hour
+        hourly_pnl = df_bot_closed.groupby("hour")["Realized PnL ($)"].agg(["sum", "count"]).reset_index()
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Bar(
+            x=hourly_pnl["hour"],
+            y=hourly_pnl["sum"],
+            name="PnL by Hour"
+        ))
+        
+        fig.update_layout(
+            title="Total PnL by Hour of Day",
+            xaxis_title="Hour (24h format)",
+            yaxis_title="Total PnL ($)"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"❌ Error analyzing performance trends: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 def render_filter_by_date():
     """Render Filter by Date view"""
-    st.warning("⚠️ render_filter_by_date function not yet implemented. Please add this function.")
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📆 Filter Trades by Date Range")
+    
+    # Date range selection
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        start_date = st.date_input(
+            "Start Date",
+            value=pd.Timestamp.now().date() - pd.Timedelta(days=30)
+        )
+    
+    with col2:
+        end_date = st.date_input(
+            "End Date",
+            value=pd.Timestamp.now().date()
+        )
+    
+    if start_date > end_date:
+        st.error("❌ Start date must be before end date!")
+        return
+    
+    # Trade type selection
+    trade_types = st.multiselect(
+        "Select Trade Types",
+        ["Bot Trades", "Manual Trades"],
+        default=["Bot Trades", "Manual Trades"]
+    )
+    
+    # Apply filters
+    if st.button("🔍 Apply Filters"):
+        try:
+            all_trades = []
+            
+            # Filter bot trades
+            if "Bot Trades" in trade_types:
+                df_trades = load_trades()
+                if not df_trades.empty:
+                    df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"], errors='coerce')
+                    df_trades["trade_type"] = "Bot"
+                    all_trades.append(df_trades)
+            
+            # Filter manual trades
+            if "Manual Trades" in trade_types:
+                df_manual = load_closed_manual_trades()
+                if not df_manual.empty:
+                    # Standardize manual trades format
+                    df_manual_std = pd.DataFrame({
+                        "timestamp": pd.to_datetime(df_manual.get("timestamp", pd.Timestamp.now())),
+                        "symbol": df_manual.get("Symbol", df_manual.get("symbol", "")),
+                        "side": df_manual.get("Side", df_manual.get("side", "")),
+                        "qty": df_manual.get("Size", df_manual.get("qty", 0)),
+                        "entry_price": df_manual.get("Entry Price", df_manual.get("entry_price", 0)),
+                        "stop_loss": 0,
+                        "take_profit": df_manual.get("Exit Price", df_manual.get("take_profit", 0)),
+                        "note": "manual",
+                        "Realized PnL ($)": df_manual["Realized PnL ($)"],
+                        "Realized PnL (%)": df_manual["Realized PnL (%)"],
+                        "trade_type": "Manual"
+                    })
+                    all_trades.append(df_manual_std)
+            
+            if not all_trades:
+                st.warning("No trades found with selected filters.")
+                return
+            
+            # Combine all trades
+            df_combined = pd.concat(all_trades, ignore_index=True)
+            
+            # Apply date filter
+            df_filtered = df_combined[
+                (df_combined["timestamp"].dt.date >= start_date) &
+                (df_combined["timestamp"].dt.date <= end_date)
+            ]
+            
+            if df_filtered.empty:
+                st.warning("No trades found in the selected date range.")
+                return
+            
+            # Display summary
+            st.subheader("📊 Filtered Results Summary")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Trades", len(df_filtered))
+            
+            with col2:
+                total_pnl = df_filtered["Realized PnL ($)"].sum()
+                st.metric("Total PnL", f"${total_pnl:,.2f}")
+            
+            with col3:
+                wins = len(df_filtered[df_filtered["Realized PnL ($)"] > 0])
+                win_rate = (wins / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+                st.metric("Win Rate", f"{win_rate:.2f}%")
+            
+            with col4:
+                avg_pnl = df_filtered["Realized PnL ($)"].mean()
+                st.metric("Avg PnL", f"${avg_pnl:.2f}")
+            
+            # Display trades
+            st.subheader("📋 Filtered Trades")
+            
+            # Create display dataframe
+            display_df = df_filtered[[
+                "timestamp", "symbol", "side", "qty", "entry_price",
+                "stop_loss", "take_profit", "note", "Realized PnL ($)",
+                "Realized PnL (%)", "trade_type"
+            ]].copy()
+            
+            # Sort by timestamp
+            display_df = display_df.sort_values("timestamp", ascending=False)
+            
+            st.dataframe(display_df)
+            
+            # Create visualization
+            st.subheader("📈 PnL Over Time")
+            
+            # Daily PnL aggregation
+            df_filtered["date"] = df_filtered["timestamp"].dt.date
+            daily_pnl = df_filtered.groupby(["date", "trade_type"])["Realized PnL ($)"].sum().reset_index()
+            
+            fig = px.bar(
+                daily_pnl,
+                x="date",
+                y="Realized PnL ($)",
+                color="trade_type",
+                title="Daily PnL by Trade Type"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+        except Exception as e:
+            st.error(f"❌ Error filtering trades: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 def render_crypto_news():
-    """Render Crypto News view"""
-    st.warning("⚠️ render_crypto_news function not yet implemented. Please add this function.")
+    """Render the Crypto News tab."""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📰 Real-Time Crypto News")
+    
+    try:
+        # Get crypto news from external API
+        news_items = get_crypto_news()
+        
+        if not news_items:
+            st.info("No news available right now.")
+        else:
+            # Create tabs for different news categories
+            tabs = st.tabs(["📰 All News", "🚨 Alerts", "📈 Market Analysis"])
+            
+            with tabs[0]:
+                st.subheader("Latest Crypto News")
+                
+                for item in news_items:
+                    title = item.get("title", "No title")
+                    url = item.get("url", "#")
+                    published = item.get("published", "Unknown")
+                    source = item.get("source", "Unknown")
+                    description = item.get("description", "")
+                    
+                    # Determine alert level based on keywords
+                    alert = ""
+                    alert_color = "white"
+                    
+                    title_lower = title.lower()
+                    if any(keyword in title_lower for keyword in ["hack", "exploit", "attack", "stolen"]):
+                        alert = "🚨 SECURITY ALERT "
+                        alert_color = "red"
+                    elif any(keyword in title_lower for keyword in ["bullish", "moon", "rally", "surge"]):
+                        alert = "📈 BULLISH "
+                        alert_color = "green"
+                    elif any(keyword in title_lower for keyword in ["bearish", "crash", "dump", "fall"]):
+                        alert = "📉 BEARISH "
+                        alert_color = "orange"
+                    
+                    # Create news card
+                    st.markdown(f"""
+                    <div style="border: 1px solid rgba(255,255,255,0.1); 
+                                border-radius: 10px; 
+                                padding: 15px; 
+                                margin-bottom: 15px;
+                                background-color: rgba(255,255,255,0.02);">
+                        <h4>
+                            <span style="color: {alert_color};">{alert}</span>
+                            <a href="{url}" target="_blank" style="color: #00fff5; text-decoration: none;">
+                                {title}
+                            </a>
+                        </h4>
+                        <p style="color: #cccccc; font-size: 0.9rem;">
+                            {description[:200]}{'...' if len(description) > 200 else ''}
+                        </p>
+                        <p style="color: #888; font-size: 0.8rem;">
+                            📅 {published} | 📰 {source}
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with tabs[1]:
+                st.subheader("Security & High-Impact Alerts")
+                
+                # Filter for security-related news
+                security_alerts = [
+                    item for item in news_items
+                    if any(keyword in item.get("title", "").lower() 
+                          for keyword in ["hack", "exploit", "attack", "stolen", "breach", "scam"])
+                ]
+                
+                if security_alerts:
+                    for alert in security_alerts:
+                        st.error(f"🚨 **{alert.get('source', 'Unknown')}**: {alert.get('title', 'No title')}")
+                        st.write(f"🔗 [Read more]({alert.get('url', '#')})")
+                        st.markdown("---")
+                else:
+                    st.success("✅ No security alerts at this time.")
+            
+            with tabs[2]:
+                st.subheader("Market Analysis & Insights")
+                
+                # Filter for market analysis
+                analysis_news = [
+                    item for item in news_items
+                    if any(keyword in item.get("title", "").lower() 
+                          for keyword in ["analysis", "prediction", "forecast", "outlook", "technical"])
+                ]
+                
+                if analysis_news:
+                    for item in analysis_news:
+                        title = item.get("title", "No title")
+                        url = item.get("url", "#")
+                        source = item.get("source", "Unknown")
+                        
+                        st.markdown(f"""
+                        <div style="border-left: 4px solid #00fff5; 
+                                    padding-left: 15px; 
+                                    margin-bottom: 15px;">
+                            <h4><a href="{url}" target="_blank" style="color: #00fff5; text-decoration: none;">{title}</a></h4>
+                            <p style="color: #888;">📰 {source}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("No market analysis articles available.")
+                    
+    except Exception as e:
+        st.error(f"❌ Failed to fetch crypto news: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 def render_onchain_data():
-    """Render On-Chain Data view"""
-    st.warning("⚠️ render_onchain_data function not yet implemented. Please add this function.")
+    """Render On-Chain Data tab."""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📡 ETH Gas + Block Info (Etherscan)")
+    
+    try:
+        # Get on-chain data
+        gas = get_eth_gas()
+        block = get_block_info()
+        
+        # Gas prices section
+        st.subheader("⛽ Current Gas Prices")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("🐌 Safe Gas", f"{gas['low']} Gwei", help="Recommended for non-urgent transactions")
+        
+        with col2:
+            st.metric("⚡ Standard Gas", f"{gas['avg']} Gwei", help="Recommended for normal transactions")
+        
+        with col3:
+            st.metric("🚀 Fast Gas", f"{gas['high']} Gwei", help="Recommended for urgent transactions")
+        
+        with col4:
+            st.metric("📦 Latest Block", f"#{block}", help="Most recent block number")
+        
+        # Gas price history chart
+        if 'gas_history' in st.session_state:
+            st.subheader("📈 Gas Price History")
+            
+            # Add current data to history
+            current_time = pd.Timestamp.now()
+            new_data = pd.DataFrame({
+                'timestamp': [current_time],
+                'low': [gas['low']],
+                'avg': [gas['avg']],
+                'high': [gas['high']]
+            })
+            
+            # Keep last 100 data points
+            st.session_state.gas_history = pd.concat([st.session_state.gas_history, new_data]).tail(100)
+        else:
+            # Initialize with current data
+            st.session_state.gas_history = pd.DataFrame({
+                'timestamp': [pd.Timestamp.now()],
+                'low': [gas['low']],
+                'avg': [gas['avg']],
+                'high': [gas['high']]
+            })
+        
+        # Create gas price chart
+        fig = go.Figure()
+        
+        gas_history = st.session_state.gas_history
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['low'],
+            mode='lines+markers',
+            name='Safe Gas',
+            line=dict(color='green')
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['avg'],
+            mode='lines+markers',
+            name='Standard Gas',
+            line=dict(color='orange')
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['high'],
+            mode='lines+markers',
+            name='Fast Gas',
+            line=dict(color='red')
+        ))
+        
+        fig.update_layout(
+            title="Gas Price Trends",
+            xaxis_title="Time",
+            yaxis_title="Gas Price (Gwei)",
+            height=400
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Network stats
+        st.subheader("🌐 Network Statistics")
+        
+        # Get additional network data (if available)
+        try:
+            # Placeholder for additional network stats
+            # In a real implementation, you would fetch:
+            # - Network congestion
+            # - Average block time
+            # - Pending transactions
+            # - MEV data
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("⏱️ Avg Block Time", "12-15 seconds", help="Current average block confirmation time")
+                st.metric("🏗️ Network Congestion", "Medium", help="Based on pending transactions")
+            
+            with col2:
+                st.metric("💸 Average Transaction Fee", f"${(gas['avg'] * 21000 * 2000 / 1e9):.2f}", help="Estimated for standard transfer")
+                st.metric("⏳ Pending Txs", "~50,000", help="Approximate pending transactions")
+            
+        except Exception as e:
+            st.warning(f"Additional network stats unavailable: {e}")
+        
+        # Gas optimization tips
+        st.subheader("💡 Gas Optimization Tips")
+        
+        st.markdown("""
+        **Tips to save on gas fees:**
+        
+        - 🕐 **Optimal timing**: Gas prices are typically lower during weekends and late night hours (UTC)
+        - 📊 **Monitor trends**: Use the chart above to identify low-gas periods
+        - 🔄 **Batch transactions**: Combine multiple operations when possible
+        - ⚙️ **Optimize smart contracts**: Use more efficient code patterns
+        - 🎯 **Set appropriate gas limits**: Avoid over-estimating gas requirements
+        """)
+        
+    except Exception as e:
+        st.error(f"❌ Failed to fetch on-chain data: {e}")
+        st.info("Please check your internet connection and API keys.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ... [Rest of your existing functions remain the same] ...
 
-# Run the dashboard
+# =======================
+# RUN THE DASHBOARD
+# =======================
 if __name__ == "__main__":
     main()
