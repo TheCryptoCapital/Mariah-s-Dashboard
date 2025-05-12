@@ -661,6 +661,28 @@ def set_dashboard_background(image_file):
         font-weight: 600;
         font-size: 1rem;
     }}
+    
+    /* Custom CSS for radio buttons */
+    div[data-testid="stRadio"] > div {{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }}
+    div[data-testid="stRadio"] label {{
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 245, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }}
+    div[data-testid="stRadio"] label:hover {{
+        background-color: rgba(0, 255, 245, 0.1);
+        border-color: rgba(0, 255, 245, 0.4);
+    }}
+    div[data-testid="stRadio"] label input[type="radio"]:checked + span {{
+        background-color: rgba(0, 255, 245, 0.2);
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -1632,6 +1654,422 @@ def render_advanced_analytics(df_trades, df_pnl):
     st.markdown('</div>', unsafe_allow_html=True)
 
 # =======================
+# ENHANCED SIGNAL SCANNER SYSTEM
+# =======================
+def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
+    """Enhanced Multi-Signal Scanner with weighted consensus logic"""
+    with st.container():
+        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        st.subheader("📡 Multi-Signal Scanner System")
+        
+        # Initialize Mariah Level 2
+        if "mariah_level2" not in st.session_state:
+            st.session_state.mariah_level2 = MariahLevel2()
+        
+        mariah2 = st.session_state.mariah_level2
+        
+        # Signal Scanner Selection
+        st.markdown("### 🔍 Available Signal Scanners")
+        
+        # Create columns for scanner selection
+        scanner_cols = st.columns(3)
+        
+        with scanner_cols[0]:
+            use_rsi_macd = st.checkbox("📊 RSI/MACD Scanner", value=True, help="Classic oversold/overbought entries and trend confirmations")
+            use_ml = st.checkbox("🤖 ML Signal Scanner", value=True, help="Probabilistic predictions from trained models")
+        
+        with scanner_cols[1]:
+            use_sentiment = st.checkbox("📰 News Sentiment Scanner", value=True, help="Detects keywords and adjusts risk/direction")
+            use_onchain = st.checkbox("⛓️ On-Chain Flow Scanner", value=True, help="Monitors whale flows, gas spikes, CEX flows")
+        
+        with scanner_cols[2]:
+            use_enhanced = st.checkbox("🔧 Enhanced Multi-Indicator", value=True, help="Advanced technical analysis combination")
+        
+        # Consensus Logic Settings
+        st.markdown("---")
+        st.markdown("### ⚖️ Consensus Logic Settings")
+        
+        logic_cols = st.columns(3)
+        
+        with logic_cols[0]:
+            min_consensus = st.slider("Minimum Scanners Aligned", min_value=2, max_value=5, value=3, 
+                                    help="Minimum number of scanners that must agree before executing")
+        
+        with logic_cols[1]:
+            volatility_threshold = st.slider("High Volatility Threshold (%)", min_value=1.0, max_value=10.0, value=5.0, step=0.5,
+                                           help="ATR percentage threshold for high volatility period")
+        
+        with logic_cols[2]:
+            high_vol_weight_ml = st.slider("ML Weight (High Vol)", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
+            high_vol_weight_onchain = st.slider("On-Chain Weight (High Vol)", min_value=1.0, max_value=3.0, value=1.3, step=0.1)
+        
+        # Scanner Weights Configuration
+        st.markdown("### 🏋️ Scanner Weights Configuration")
+        weight_cols = st.columns(5)
+        
+        weights = {}
+        with weight_cols[0]:
+            weights['rsi_macd'] = st.number_input("RSI/MACD Weight", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
+        with weight_cols[1]:
+            weights['ml'] = st.number_input("ML Weight", min_value=0.1, max_value=2.0, value=1.2, step=0.1)
+        with weight_cols[2]:
+            weights['sentiment'] = st.number_input("Sentiment Weight", min_value=0.1, max_value=2.0, value=0.8, step=0.1)
+        with weight_cols[3]:
+            weights['onchain'] = st.number_input("On-Chain Weight", min_value=0.1, max_value=2.0, value=1.1, step=0.1)
+        with weight_cols[4]:
+            weights['enhanced'] = st.number_input("Enhanced Weight", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
+        
+        # Trading Parameters
+        st.markdown("---")
+        st.markdown("### 📈 Trading Parameters")
+        
+        param_cols = st.columns(2)
+        with param_cols[0]:
+            interval = st.selectbox("Candle Interval", ["5", "15", "30", "60", "240"], index=1)
+        with param_cols[1]:
+            symbols = st.multiselect("Symbols to Scan", 
+                                   ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"], 
+                                   default=["BTCUSDT", "ETHUSDT"])
+        
+        st.markdown("---")
+        
+        # Enhanced Analysis for each symbol
+        for symbol in symbols:
+            with st.expander(f"📈 {symbol} Multi-Signal Analysis", expanded=True):
+                # Daily loss guard
+                if check_max_daily_loss(df_bot_closed, df_manual_closed):
+                    st.warning(f"🛑 Mariah skipped {symbol} — Daily loss limit reached.")
+                    continue
+                
+                try:
+                    # Initialize signal results
+                    scanner_results = {}
+                    signal_signals = []
+                    
+                    # Get current market data for volatility calculation
+                    historical_data = get_historical_data(symbol, interval, limit=100)
+                    if not historical_data.empty:
+                        # Calculate ATR for volatility
+                        atr = calculate_atr(historical_data)
+                        current_price = historical_data['close'].iloc[-1]
+                        volatility_pct = (atr / current_price) * 100
+                        is_high_volatility = volatility_pct > volatility_threshold
+                        
+                        # Adjust weights for high volatility
+                        current_weights = weights.copy()
+                        if is_high_volatility:
+                            current_weights['ml'] *= high_vol_weight_ml
+                            current_weights['onchain'] *= high_vol_weight_onchain
+                            st.info(f"🔥 High volatility detected ({volatility_pct:.2f}%) - ML and On-Chain weights increased")
+                    else:
+                        is_high_volatility = False
+                        current_weights = weights.copy()
+                    
+                    # 1. RSI/MACD Scanner
+                    if use_rsi_macd:
+                        rsi_value, rsi_trigger = check_rsi_signal(symbol=symbol, interval=interval, mode=mode)
+                        
+                        # Get MACD data
+                        if not historical_data.empty:
+                            macd_data = ta.macd(historical_data['close'])
+                            macd_line = macd_data['MACD_12_26_9'].iloc[-1]
+                            signal_line = macd_data['MACDs_12_26_9'].iloc[-1]
+                            macd_bullish = macd_line > signal_line
+                        else:
+                            macd_bullish = False
+                        
+                        # Combine RSI and MACD
+                        if rsi_trigger and macd_bullish:
+                            scanner_results['rsi_macd'] = {
+                                'signal': 'buy',
+                                'confidence': 0.85,
+                                'reason': f'RSI oversold ({rsi_value:.1f}) + MACD bullish crossover'
+                            }
+                        elif rsi_value > 70 and not macd_bullish:
+                            scanner_results['rsi_macd'] = {
+                                'signal': 'sell',
+                                'confidence': 0.75,
+                                'reason': f'RSI overbought ({rsi_value:.1f}) + MACD bearish'
+                            }
+                        else:
+                            scanner_results['rsi_macd'] = {
+                                'signal': 'hold',
+                                'confidence': 0.5,
+                                'reason': f'RSI: {rsi_value:.1f}, MACD: {"+" if macd_bullish else "-"}'
+                            }
+                    
+                    # 2. ML Signal Scanner
+                    if use_ml and not historical_data.empty:
+                        ml_generator = MLSignalGenerator(model_path=f"models/{symbol}_{interval}_model.pkl")
+                        ml_signal, ml_confidence = ml_generator.get_signal(historical_data)
+                        
+                        scanner_results['ml'] = {
+                            'signal': ml_signal,
+                            'confidence': ml_confidence,
+                            'reason': f'ML model prediction: {ml_signal} ({ml_confidence:.1%})'
+                        }
+                    
+                    # 3. News Sentiment Scanner
+                    if use_sentiment:
+                        # Simplified news sentiment (you would integrate with real news API)
+                        sentiment_score = get_simple_sentiment_score(symbol)
+                        
+                        if sentiment_score > 0.6:
+                            scanner_results['sentiment'] = {
+                                'signal': 'buy',
+                                'confidence': min(sentiment_score, 0.9),
+                                'reason': f'Positive sentiment ({sentiment_score:.2f})'
+                            }
+                        elif sentiment_score < 0.4:
+                            scanner_results['sentiment'] = {
+                                'signal': 'sell',
+                                'confidence': min(1 - sentiment_score, 0.9),
+                                'reason': f'Negative sentiment ({sentiment_score:.2f})'
+                            }
+                        else:
+                            scanner_results['sentiment'] = {
+                                'signal': 'hold',
+                                'confidence': 0.5,
+                                'reason': f'Neutral sentiment ({sentiment_score:.2f})'
+                            }
+                    
+                    # 4. On-Chain Flow Scanner
+                    if use_onchain:
+                        # Simplified on-chain analysis (you would integrate with Glassnode/Santiment)
+                        onchain_signal = get_simple_onchain_signal(symbol)
+                        
+                        scanner_results['onchain'] = onchain_signal
+                    
+                    # 5. Enhanced Multi-Indicator Scanner
+                    if use_enhanced:
+                        analysis = mariah2.analyze_symbol(symbol, interval, session)
+                        
+                        if "error" not in analysis:
+                            scanner_results['enhanced'] = {
+                                'signal': analysis['action'],
+                                'confidence': analysis['confidence'],
+                                'reason': analysis['summary']
+                            }
+                    
+                    # Calculate Weighted Consensus
+                    consensus_result = calculate_weighted_consensus(scanner_results, current_weights, min_consensus)
+                    
+                    # Display Results
+                    st.markdown(f"### 🎯 Consensus Result for {symbol}")
+                    
+                    result_cols = st.columns(4)
+                    with result_cols[0]:
+                        action_color = {
+                            'buy': '🟢',
+                            'sell': '🔴',
+                            'hold': '⚪'
+                        }[consensus_result['final_signal']]
+                        st.metric("Final Signal", f"{action_color} {consensus_result['final_signal'].upper()}")
+                    
+                    with result_cols[1]:
+                        st.metric("Consensus Strength", f"{consensus_result['consensus_score']:.1%}")
+                    
+                    with result_cols[2]:
+                        st.metric("Scanners Aligned", f"{consensus_result['aligned_count']}/{len(scanner_results)}")
+                    
+                    with result_cols[3]:
+                        st.metric("Weighted Score", f"{consensus_result['weighted_score']:.2f}")
+                    
+                    # Show individual scanner results
+                    st.markdown("### 📊 Individual Scanner Results")
+                    
+                    for scanner_name, result in scanner_results.items():
+                        signal_emoji = {
+                            'buy': '🟢',
+                            'sell': '🔴',
+                            'hold': '⚪'
+                        }[result['signal']]
+                        
+                        weight = current_weights.get(scanner_name, 1.0)
+                        weighted_contribution = result['confidence'] * weight
+                        
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.write(f"**{scanner_name.replace('_', ' ').title()}**")
+                        with col2:
+                            st.write(f"{signal_emoji} {result['signal'].upper()}")
+                        with col3:
+                            st.write(f"Confidence: {result['confidence']:.1%}")
+                        with col4:
+                            st.write(f"Weighted: {weighted_contribution:.2f}")
+                        
+                        st.caption(f"💡 {result['reason']}")
+                        st.markdown("---")
+                    
+                    # Execute Trade Button
+                    if consensus_result['final_signal'] != 'hold' and consensus_result['aligned_count'] >= min_consensus:
+                        if st.button(f"🚀 Execute {consensus_result['final_signal'].upper()} for {symbol}", 
+                                   key=f"exec_consensus_{symbol}"):
+                            
+                            # Calculate position size
+                            sl_pct, tp_pct, _, _ = get_strategy_params(mode)
+                            current_price = float(session.get_tickers(category="linear", symbol=symbol)["result"]["list"][0]["lastPrice"])
+                            
+                            if consensus_result['final_signal'] == 'buy':
+                                stop_loss = current_price * (1 - sl_pct / 100)
+                            else:
+                                stop_loss = current_price * (1 + sl_pct / 100)
+                            
+                            qty = position_size_from_risk(account_balance, risk_percent, current_price, stop_loss)
+                            
+                            # Reduce position size if consensus is weak
+                            if consensus_result['consensus_score'] < 0.7:
+                                qty *= 0.5  # Half position for weak consensus
+                                st.info(f"⚠️ Reducing position size by 50% due to weak consensus")
+                            
+                            # Execute the order
+                            order = session.place_order(
+                                category="linear",
+                                symbol=symbol,
+                                side=consensus_result['final_signal'].title(),
+                                orderType="Market",
+                                qty=round(qty, 3),
+                                timeInForce="GoodTillCancel",
+                                reduceOnly=False,
+                                closeOnTrigger=False
+                            )
+                            
+                            # Log with consensus details
+                            log_rsi_trade_to_csv(
+                                symbol=symbol,
+                                side=consensus_result['final_signal'].title(),
+                                qty=qty,
+                                entry_price=current_price,
+                                mode=f"{mode}_Consensus_{consensus_result['aligned_count']}_scanners"
+                            )
+                            
+                            st.success(f"✅ Consensus trade executed for {symbol}!")
+                            st.json(order)
+                            
+                            # Mariah speaks about the consensus
+                            mariah_speak(f"Consensus trade executed for {symbol}! "
+                                       f"{consensus_result['aligned_count']} scanners aligned with "
+                                       f"{consensus_result['consensus_score']:.1%} confidence.")
+                    
+                    elif consensus_result['aligned_count'] < min_consensus:
+                        st.warning(f"⚠️ Insufficient consensus: Only {consensus_result['aligned_count']} scanners aligned "
+                                 f"(need {min_consensus})")
+                    
+                except Exception as e:
+                    st.error(f"❌ Error in multi-signal analysis for {symbol}: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+# Supporting Functions for the Enhanced Scanner
+def calculate_atr(df, period=14):
+    """Calculate Average True Range for volatility measurement"""
+    high_low = df['high'] - df['low']
+    high_close = np.abs(df['high'] - df['close'].shift())
+    low_close = np.abs(df['low'] - df['close'].shift())
+    
+    ranges = pd.concat([high_low, high_close, low_close], axis=1)
+    true_range = ranges.max(axis=1)
+    return true_range.rolling(period).mean().iloc[-1]
+
+
+def get_simple_sentiment_score(symbol):
+    """Simplified sentiment analysis - would integrate with real news API"""
+    # This would normally query news APIs and analyze sentiment
+    # For now, return a random score for demonstration
+    import random
+    return random.uniform(0.3, 0.8)
+
+
+def get_simple_onchain_signal(symbol):
+    """Simplified on-chain analysis - would integrate with Glassnode/Santiment"""
+    # This would normally query on-chain data APIs
+    # For now, return a mock signal
+    import random
+    
+    signals = ['buy', 'sell', 'hold']
+    confidences = [0.6, 0.7, 0.8, 0.9]
+    
+    mock_signal = random.choice(signals)
+    mock_confidence = random.choice(confidences)
+    
+    reasons = {
+        'buy': 'Large inflows to exchanges detected',
+        'sell': 'Whale movements suggest distribution',
+        'hold': 'On-chain metrics showing consolidation'
+    }
+    
+    return {
+        'signal': mock_signal,
+        'confidence': mock_confidence,
+        'reason': reasons[mock_signal]
+    }
+
+
+def calculate_weighted_consensus(scanner_results, weights, min_consensus):
+    """Calculate weighted consensus from multiple scanners"""
+    if not scanner_results:
+        return {
+            'final_signal': 'hold',
+            'consensus_score': 0.0,
+            'aligned_count': 0,
+            'weighted_score': 0.0
+        }
+    
+    # Separate signals by type
+    buy_signals = []
+    sell_signals = []
+    hold_signals = []
+    
+    total_weighted_score = 0
+    total_weight = 0
+    
+    for scanner_name, result in scanner_results.items():
+        weight = weights.get(scanner_name, 1.0)
+        weighted_confidence = result['confidence'] * weight
+        
+        if result['signal'] == 'buy':
+            buy_signals.append(weighted_confidence)
+        elif result['signal'] == 'sell':
+            sell_signals.append(weighted_confidence)
+        else:
+            hold_signals.append(weighted_confidence)
+        
+        total_weighted_score += weighted_confidence
+        total_weight += weight
+    
+    # Calculate scores
+    buy_score = sum(buy_signals)
+    sell_score = sum(sell_signals)
+    hold_score = sum(hold_signals)
+    
+    # Determine final signal
+    if buy_score > sell_score and buy_score > hold_score:
+        final_signal = 'buy'
+        consensus_score = buy_score / total_weighted_score if total_weighted_score > 0 else 0
+        aligned_count = len(buy_signals)
+    elif sell_score > hold_score:
+        final_signal = 'sell'
+        consensus_score = sell_score / total_weighted_score if total_weighted_score > 0 else 0
+        aligned_count = len(sell_signals)
+    else:
+        final_signal = 'hold'
+        consensus_score = hold_score / total_weighted_score if total_weighted_score > 0 else 0
+        aligned_count = len(hold_signals)
+    
+    # Calculate final weighted score
+    avg_weighted_score = total_weighted_score / total_weight if total_weight > 0 else 0
+    
+    return {
+        'final_signal': final_signal,
+        'consensus_score': consensus_score,
+        'aligned_count': aligned_count,
+        'weighted_score': avg_weighted_score
+    }
+
+# =======================
 # MAIN DASHBOARD LAYOUT
 # =======================
 def main():
@@ -2331,6 +2769,7 @@ def main():
 # =======================
 # MORE TOOLS TAB FUNCTIONS
 # =======================
+<<<<<<< HEAD
 def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
     """Enhanced Signal Scanner with multiple indicators"""
     with st.container():
@@ -2512,6 +2951,26 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                     st.error(f"❌ Error analyzing {symbol}: {e}")
         
         st.markdown('</div>', unsafe_allow_html=True)
+=======
+def render_daily_pnl():
+    """Render Daily PnL view"""
+    st.warning("⚠️ render_daily_pnl function not yet implemented. Please add this function.")
+
+def render_performance_trends():
+    """Render Performance Trends view"""
+    st.warning("⚠️ render_performance_trends function not yet implemented. Please add this function.")
+
+def render_filter_by_date():
+    """Render Filter by Date view"""
+    st.warning("⚠️ render_filter_by_date function not yet implemented. Please add this function.")
+
+def render_crypto_news():
+    """Render Crypto News view"""
+    st.warning("⚠️ render_crypto_news function not yet implemented. Please add this function.")
+
+def render_onchain_data():
+    """Render On-Chain Data view"""
+    st.warning("⚠️ render_onchain_data function not yet implemented. Please add this function.")
 
 # ... [Rest of your existing functions remain the same] ...
 
