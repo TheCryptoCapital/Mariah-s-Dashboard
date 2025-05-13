@@ -2634,20 +2634,23 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                         is_high_volatility = False
                         current_weights = weights.copy()
                     
-                    # 1. RSI/MACD Scanner
+                # 1. RSI/MACD Scanner
                     if use_rsi_macd:
                         rsi_value, rsi_trigger = check_rsi_signal(session, symbol=symbol, interval=interval, mode=mode)
                         
                         # Get MACD data
                         if not historical_data.empty:
                             macd_data = ta.macd(historical_data['close'])
-                            macd_line = macd_data['MACD_12_26_9'].iloc[-1]
-                            signal_line = macd_data['MACDs_12_26_9'].iloc[-1]
-                            macd_bullish = macd_line > signal_line
+                            if not macd_data['MACD_12_26_9'].empty and not macd_data['MACDs_12_26_9'].empty:
+                                macd_line = macd_data['MACD_12_26_9'].iloc[-1]
+                                signal_line = macd_data['MACDs_12_26_9'].iloc[-1]
+                                macd_bullish = macd_line > signal_line
+                            else:
+                                macd_bullish = False
                         else:
                             macd_bullish = False
                         
-                        # Format RSI value safely to avoid f-string errors
+                        # Format RSI value safely - this is the key fix
                         rsi_display = f"{rsi_value:.1f}" if rsi_value is not None else "N/A"
                         macd_display = "+" if macd_bullish else "-"
                         
