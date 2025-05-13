@@ -546,6 +546,84 @@ class MariahLevel2:
 # =======================
 # UTILITY FUNCTIONS
 # =======================
+def create_crypto_ticker(session):
+    """Create a simple crypto ticker using your existing session"""
+    
+    # Add CSS for the ticker
+    st.markdown("""
+    <style>
+    .crypto-ticker {
+        background: linear-gradient(90deg, rgba(15,15,35,0.95) 0%, rgba(30,20,60,0.95) 100%);
+        border-bottom: 1px solid #00fff5;
+        padding: 10px 0;
+        overflow: hidden;
+        white-space: nowrap;
+        position: relative;
+        z-index: 999;
+    }
+    
+    .ticker-scroll {
+        display: inline-block;
+        animation: scroll 60s linear infinite;
+    }
+    
+    @keyframes scroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    
+    .crypto-item {
+        display: inline-block;
+        margin: 0 20px;
+        padding: 5px 15px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 5px;
+        font-size: 14px;
+        color: white;
+    }
+    
+    .positive { color: #00d87f; }
+    .negative { color: #ff4d4d; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Get crypto data
+    crypto_symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"]
+    ticker_items = []
+    
+    for symbol in crypto_symbols:
+        try:
+            response = session.get_tickers(category="linear", symbol=symbol)
+            if response.get("retCode") == 0:
+                data = response["result"]["list"][0]
+                price = float(data["lastPrice"])
+                change_pct = float(data["price24hPcnt"]) * 100
+                
+                color_class = "positive" if change_pct >= 0 else "negative"
+                sign = "+" if change_pct >= 0 else ""
+                
+                item = f"""
+                <span class="crypto-item">
+                    <strong>{symbol.replace('USDT', '')}</strong> 
+                    ${price:,.2f} 
+                    <span class="{color_class}">{sign}{change_pct:.2f}%</span>
+                </span>
+                """
+                ticker_items.append(item)
+        except Exception as e:
+            continue
+    
+    # Render ticker
+    if ticker_items:
+        ticker_html = f"""
+        <div class="crypto-ticker">
+            <div class="ticker-scroll">
+                {''.join(ticker_items)}
+            </div>
+        </div>
+        """
+        st.markdown(ticker_html, unsafe_allow_html=True)
+
 def get_base64_image(path):
     """Convert an image to base64 encoding."""
     try:
@@ -2854,6 +2932,18 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
 def main():
     """Enhanced main dashboard function with visual improvements."""
     
+    # Load environment variables
+    load_dotenv()
+    
+    # Set OpenAI API key
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    
+    # Set page layout (MUST BE FIRST!)
+    st.set_page_config(page_title="The Crypto Capital", layout="wide")
+    
+    # ADD THIS LINE HERE - RIGHT AFTER page config
+    create_crypto_ticker(session)
+    
     # Initial Mariah greeting
     if not st.session_state.get("mariah_greeted", False):
         mariah_speak("System online. Welcome to the Crypto Capital.")
@@ -2866,6 +2956,10 @@ def main():
     # Apply background image
     set_dashboard_background("Screenshot 2025.png")
     
+    # =======================
+    # ENHANCED HEADER
+    # =======================
+    # ... rest of your code
     # =======================
     # ENHANCED HEADER
     # =======================
