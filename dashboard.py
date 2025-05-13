@@ -42,6 +42,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from news_feed import get_crypto_news
 from onchain_feed import get_eth_gas, get_block_info
+<<<<<<< HEAD
+=======
+
+>>>>>>> d3778dd58f7a49990e2e6a3ac1aa0ddd82ee06c3
 
 # Local module imports
 from strategy_mode import get_strategy_params
@@ -1967,6 +1971,7 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                     st.code(traceback.format_exc())
         
         st.markdown('</div>', unsafe_allow_html=True)
+<<<<<<< HEAD
         
         # Risk Controls
         st.markdown("---")
@@ -2817,6 +2822,8 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
 
 if __name__ == "__main__":
     main()
+=======
+>>>>>>> d3778dd58f7a49990e2e6a3ac1aa0ddd82ee06c3
 
 
 # Supporting Functions for the Enhanced Scanner
@@ -2926,6 +2933,7 @@ def calculate_weighted_consensus(scanner_results, weights, min_consensus):
     }
 
 # =======================
+<<<<<<< HEAD
 # MORE TOOLS TAB FUNCTIONS
 # =======================
 def render_daily_pnl():
@@ -3530,6 +3538,9 @@ def render_onchain_data():
 
 # =======================
 # ENHANCED MAIN FUNCTION
+=======
+# MAIN DASHBOARD LAYOUT
+>>>>>>> d3778dd58f7a49990e2e6a3ac1aa0ddd82ee06c3
 # =======================
 def main():
     """Enhanced main dashboard function with visual improvements."""
@@ -3589,6 +3600,7 @@ def main():
         
         # Quick Actions Panel
         st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+<<<<<<< HEAD
         st.markdown("### ⚡ Quick Actions")
         col1, col2 = st.columns(2)
         with col1:
@@ -3634,6 +3646,22 @@ def main():
             )
             if st.button("Open Data Tool", use_container_width=True):
                 st.session_state.current_tool = data_tool
+=======
+        st.markdown("### 📂 More Tools")
+        more_tab = st.selectbox(
+            "Select a Tool",
+            [
+                "📆 Daily PnL",
+                "📈 Performance Trends",
+                "📊 Advanced Analytics", # New option
+                "📆 Filter by Date",
+                "📰 Crypto News",
+                "📡 On-Chain Data",
+                "📡 Signal Scanner"
+            ],
+            key="sidebar_more_tools_dropdown"
+        )
+>>>>>>> d3778dd58f7a49990e2e6a3ac1aa0ddd82ee06c3
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Dashboard Controls
@@ -3688,4 +3716,1167 @@ def main():
             qty_calc = 0
             st.info("Enter valid entry and stop-loss.")
         
+<<<<<<< HEAD
         st.markdown('</div>', unsafe_allow_html=True
+=======
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Risk Controls
+        st.markdown("---")
+        st.markdown("### 🛑 Risk Controls")
+        st.session_state["override_risk_lock"] = st.checkbox(
+            "🚨 Manually override Mariah's risk lock (not recommended)",
+            value=st.session_state.get("override_risk_lock", False)
+        )
+        
+        st.session_state["test_mode"] = st.checkbox(
+            "🧪 Enable Test Mode (force banners)",
+            value=st.session_state.get("test_mode", False)
+        )
+    
+    # Load data
+    sl_log = st.empty()  # Log area for SL updates
+    df_open_positions = load_open_positions()
+    trailing_stop_loss(log_slot=sl_log)  # Update trailing stops
+    df_manual_closed = load_closed_manual_trades()
+    df_trades = load_trades()
+    df_bot_open, df_bot_closed = split_bot_trades(df_trades)
+    
+    # Ensure columns exist
+    if "Realized PnL ($)" not in df_manual_closed.columns:
+        df_manual_closed["Realized PnL ($)"] = 0
+    if "Realized PnL ($)" not in df_bot_closed.columns:
+        df_bot_closed["Realized PnL ($)"] = 0
+    
+    # Risk Banner
+    if should_show_risk_banner(df_bot_closed, df_manual_closed):
+        mariah_speak("Warning. Mariah is pausing trades due to risk limit.")
+        st.markdown("""
+        <div style="background-color: rgba(255, 0, 0, 0.15); padding: 1rem; border-left: 6px solid red; border-radius: 8px;">
+            <h4 style="color: red;">🚨 BOT DISABLED: Daily Loss Limit Reached</h4>
+            <p style="color: #ffcccc;">Mariah has paused all trading for today to protect your capital. Override is OFF. 🛡️</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Override Banner
+    if st.session_state.get("override_risk_lock"):
+        st.markdown("""
+        <div class="override-glow" style="background-color: rgba(0, 255, 245, 0.15); padding: 1rem;
+        border-left: 6px solid #00fff5; border-radius: 8px;">
+            <h4 style="color: #00fff5;">✅ Override Active</h4>
+            <p style="color: #ccffff;">Mariah is trading today even though the risk lock was triggered. Use with caution. 😈</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Speak override message once
+        if "override_voice_done" not in st.session_state:
+            mariah_speak("Override active. Proceeding with caution.")
+            st.session_state["override_voice_done"] = True
+    
+    # No trades banner
+    if df_bot_closed.empty and df_manual_closed.empty:
+        st.warning("📭 No trades recorded today. Your bot or manual log may be empty.")
+    
+    # Log daily stats
+    log_daily_pnl_split(df_bot_closed, df_manual_closed)
+    
+    # Calculate PnL
+    open_pnl = df_open_positions["PnL ($)"].sum() if not df_open_positions.empty else 0
+    closed_pnl = df_bot_closed["Realized PnL ($)"].sum() + df_manual_closed["Realized PnL ($)"].sum()
+    
+    # Global PnL Summary
+    st.markdown("""
+    <div class="blur-card">
+    <h2>📊 Global PnL Summary</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        st.subheader("🌐 All Trades Summary")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        pnl_class = "pnl-positive" if open_pnl >= 0 else "pnl-negative"
+        st.markdown(f"""
+        <div class="blur-card">
+            <div class="pnl-label">📈 Open PnL (Unrealized)</div>
+            <div class="{pnl_class}" style="font-size: 2rem;">${open_pnl:,.2f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        pnl_class_closed = "pnl-positive" if closed_pnl >= 0 else "pnl-negative"
+        st.markdown(f"""
+        <div class="blur-card">
+            <div class="pnl-label">✅ Closed PnL (Realized)</div>
+            <div class="{pnl_class_closed}" style="font-size: 2rem;">${closed_pnl:,.2f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Main tabs
+    main_tabs = [
+        "🌐 All Trades",
+        "📈 Bot Open Trades",
+        "✅ Bot Closed Trades",
+        "🔥 Manual Open Trades",
+        "✅ Manual Closed Trades",
+        "📊 Growth Curve",
+        "🛒 Place Trade",
+        "🧠 Mariah AI"
+    ]
+    
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(main_tabs)
+    
+    # Tab 1: All Trades
+    with tab1:
+        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        st.subheader("🌐 All Trades Summary")
+        
+        # Bot Closed Trades
+        if df_bot_closed.empty:
+            st.info("No bot closed trades yet.")
+        else:
+            df_bot_closed_display = df_bot_closed.copy()
+            df_bot_closed_display["timestamp"] = df_bot_closed_display.get("timestamp", "")
+            df_bot_closed_display["note"] = df_bot_closed_display.get("note", "")
+            
+            st.subheader("✅ Bot Closed Trades")
+            st.dataframe(df_bot_closed_display[[
+                "timestamp", "symbol", "side", "qty", 
+                "entry_price", "stop_loss", "take_profit", "note",
+                "Realized PnL ($)", "Realized PnL (%)"
+            ]])
+        
+        # Manual Closed Trades
+        if df_manual_closed.empty:
+            st.info("No manual closed trades yet.")
+        else:
+            df = df_manual_closed.copy()
+            df_aligned = pd.DataFrame({
+                "timestamp": df.get("timestamp", [""] * len(df)),
+                "symbol": df.get("Symbol", df.get("symbol", "")),
+                "side": df.get("Side", df.get("side", "")),
+                "qty": df.get("Size", df.get("qty", "")),
+                "entry_price": df.get("Entry Price", df.get("entry_price", "")),
+                "stop_loss": 0,
+                "take_profit": df.get("Exit Price", df.get("take_profit", "")),
+                "note": df.get("note", ""),
+                "Realized PnL ($)": df["Realized PnL ($)"],
+                "Realized PnL (%)": df["Realized PnL (%)"]
+            })
+            
+            st.subheader("✅ Manual Closed Trades")
+            st.dataframe(df_aligned[[
+                "timestamp", "symbol", "side", "qty",
+                "entry_price", "stop_loss", "take_profit", "note",
+                "Realized PnL ($)", "Realized PnL (%)"
+            ]])
+        
+        # Manual Open Trades
+        try:
+            res = session.get_positions(
+                category="linear",
+                settleCoin="USDT",
+                accountType="UNIFIED"
+            )
+            
+            live_positions = res["result"]["list"]
+            parsed = []
+            
+            bot_open_keys = set(
+                f"{row['symbol']}|{row['qty']}|{row['entry_price']}"
+                for _, row in df_bot_open.iterrows()
+            )
+            
+            for t in live_positions:
+                try:
+                    size = float(t.get("positionValue") or 0)
+                    symbol = t.get("symbol", "")
+                    entry_price = float(t.get("avgPrice", 0))
+                    key = f"{symbol}|{size}|{entry_price}"
+                    
+                    if size > 0 and key not in bot_open_keys:
+                        parsed.append({
+                            "timestamp": t.get("updatedTime", ""),
+                            "symbol": symbol,
+                            "side": t.get("side", "Buy" if size > 0 else "Sell"),
+                            "qty": size,
+                            "entry_price": entry_price,
+                            "stop_loss": float(t.get("stopLoss", 0) or 0),
+                            "take_profit": float(t.get("markPrice", 0)),
+                            "note": "manual",
+                            "Realized PnL ($)": float(t.get("unrealisedPnl", 0)),
+                            "Realized PnL (%)": 0.0
+                        })
+                except Exception:
+                    continue
+            
+            if parsed:
+                st.subheader("🔥 Manual Open Trades (Live)")
+                df_manual_open_all = pd.DataFrame(parsed)
+                st.dataframe(df_manual_open_all[[
+                    "timestamp", "symbol", "side", "qty",
+                    "entry_price", "stop_loss", "take_profit", "note",
+                    "Realized PnL ($)", "Realized PnL (%)"
+                ]])
+            else:
+                st.info("No open manual trades found.")
+                
+        except Exception as e:
+            st.error(f"❌ Error loading manual open trades: {e}")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Tab 2: Bot Open Trades
+    with tab2:
+        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        st.subheader("📈 Bot Open Trades")
+        
+        if df_bot_open.empty:
+            st.info("No active bot trades.")
+        else:
+            df_bot_open_display = df_bot_open.copy()
+            df_bot_open_display["timestamp"] = df_bot_open_display.get("timestamp", "")
+            df_bot_open_display["note"] = df_bot_open_display.get("note", "")
+            df_bot_open_display["Realized PnL ($)"] = ""
+            df_bot_open_display["Realized PnL (%)"] = ""
+            
+            st.dataframe(df_bot_open_display[[
+                "timestamp", "symbol", "side", "qty",
+                "entry_price", "stop_loss", "take_profit", "note",
+                "Realized PnL ($)", "Realized PnL (%)"
+            ]])
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Tab 3: Bot Closed Trades
+    with tab3:
+        st.subheader("✅ Bot Closed Trades")
+        
+        if df_bot_closed.empty:
+            st.info("No closed bot trades yet.")
+        else:
+            df_bot_closed_display = df_bot_closed.copy()
+            df_bot_closed_display["timestamp"] = df_bot_closed_display.get("timestamp", "")
+            df_bot_closed_display["note"] = df_bot_closed_display.get("note", "")
+            
+            st.dataframe(df_bot_closed_display[[
+                "timestamp", "symbol", "side", "qty",
+                "entry_price", "stop_loss", "take_profit", "note",
+                "Realized PnL ($)", "Realized PnL (%)"
+            ]])
+    
+    # Tab 4: Manual Open Trades
+    with tab4:
+        st.subheader("🔥 Manual Open Trades (Live positions not logged by bot)")
+        
+        try:
+            res = session.get_positions(
+                category="linear",
+                settleCoin="USDT",
+                accountType="UNIFIED"
+            )
+            
+            live_positions = res["result"]["list"]
+            parsed = []
+            
+            # Match against existing bot trades
+            bot_open_keys = set(
+                f"{row['symbol']}|{row['qty']}|{row['entry_price']}"
+                for _, row in df_bot_open.iterrows()
+            )
+            
+            for t in live_positions:
+                try:
+                    size = float(t.get("positionValue") or 0)
+                    symbol = t.get("symbol", "")
+                    entry_price = float(t.get("avgPrice", 0))
+                    key = f"{symbol}|{size}|{entry_price}"
+                    
+                    if size > 0 and key not in bot_open_keys:
+                        parsed.append({
+                            "timestamp": t.get("updatedTime", ""),
+                            "symbol": symbol,
+                            "side": t.get("side", "Buy" if size > 0 else "Sell"),
+                            "qty": size,
+                            "entry_price": entry_price,
+                            "stop_loss": float(t.get("stopLoss", 0) or 0),
+                            "take_profit": float(t.get("markPrice", 0)),
+                            "note": "manual",
+                            "Realized PnL ($)": float(t.get("unrealisedPnl", 0)),
+                            "Realized PnL (%)": 0.0
+                        })
+                except Exception:
+                    continue
+            
+            if not parsed:
+                st.warning("No open manual trades found.")
+            else:
+                df_manual_open = pd.DataFrame(parsed)
+                st.dataframe(df_manual_open[[
+                    "timestamp", "symbol", "side", "qty",
+                    "entry_price", "stop_loss", "take_profit", "note",
+                    "Realized PnL ($)", "Realized PnL (%)"
+                ]])
+                
+        except Exception as e:
+            st.error(f"❌ Failed to fetch open manual trades: {e}")
+    
+    # Tab 5: Manual Closed Trades
+    with tab5:
+        st.subheader("✅ Manual Closed Trades")
+        
+        if df_manual_closed.empty:
+            st.info("No closed manual trades found.")
+        else:
+            aligned_rows = []
+            
+            for i, row in df_manual_closed.iterrows():
+                aligned_rows.append({
+                    "timestamp": row.get("timestamp", ""),
+                    "symbol": row.get("symbol", row.get("Symbol", "")),
+                    "side": row.get("side", row.get("Side", "")),
+                    "qty": row.get("qty", row.get("Size", "")),
+                    "entry_price": row.get("entry_price", row.get("Entry Price", "")),
+                    "stop_loss": 0,
+                    "take_profit": row.get("take_profit", row.get("Exit Price", "")),
+                    "note": row.get("note", ""),
+                    "Realized PnL ($)": row.get("Realized PnL ($)", ""),
+                    "Realized PnL (%)": row.get("Realized PnL (%)", "")
+                })
+            
+            aligned_df = pd.DataFrame(aligned_rows)
+            st.dataframe(aligned_df[[
+                "timestamp", "symbol", "side", "qty",
+                "entry_price", "stop_loss", "take_profit", "note",
+                "Realized PnL ($)", "Realized PnL (%)"
+            ]])
+    
+    # Tab 6: Growth Curve
+    with tab6:
+        st.subheader("📊 Bot Trading Growth Curve (Cumulative + Daily PnL)")
+        
+        if df_trades.empty or "take_profit" not in df_trades.columns:
+            st.warning("No bot trades available to plot.")
+        else:
+            # Ensure timestamp exists and is datetime
+            df_trades["timestamp"] = pd.to_datetime(df_trades.get("timestamp", pd.Timestamp.now()), errors='coerce')
+            
+            # Filter for closed bot trades
+            df_closed = df_trades[df_trades["take_profit"] != 0].copy()
+            
+            if df_closed.empty:
+                st.info("No closed bot trades found to generate growth curve.")
+            else:
+                df_closed = df_closed.sort_values("timestamp")
+                
+                # Fee-adjusted realized PnL
+                df_closed["Realized PnL ($)"] = (
+                    (df_closed["take_profit"] - df_closed["entry_price"]) * df_closed["qty"]
+                    - (df_closed["entry_price"] + df_closed["take_profit"]) * df_closed["qty"] * FEE_RATE
+                )
+                
+                df_closed["Cumulative PnL"] = df_closed["Realized PnL ($)"].cumsum()
+                
+                # Daily PnL aggregation
+                df_closed["date"] = df_closed["timestamp"].dt.date
+                df_daily = df_closed.groupby("date").agg({
+                    "Realized PnL ($)": "sum"
+                }).reset_index()
+                
+                # Create split subplot
+                fig = make_subplots(
+                    rows=2, cols=1,
+                    shared_xaxes=True,
+                    row_heights=[0.6, 0.4],
+                    vertical_spacing=0.08,
+                    subplot_titles=("📈 Cumulative Bot PnL", "📊 Daily Realized PnL")
+                )
+                
+                # Line: Cumulative PnL
+                fig.add_scatter(
+                    x=df_closed["timestamp"],
+                    y=df_closed["Cumulative PnL"],
+                    mode="lines+markers",
+                    name="Cumulative PnL",
+                    row=1, col=1
+                )
+                
+                # Bar: Daily PnL
+                colors = ["green" if v >= 0 else "red" for v in df_daily["Realized PnL ($)"]]
+                fig.add_bar(
+                    x=df_daily["date"],
+                    y=df_daily["Realized PnL ($)"],
+                    name="Daily PnL",
+                    marker_color=colors,
+                    row=2, col=1
+                )
+                
+                fig.update_layout(
+                    height=600,
+                    showlegend=False,
+                    margin=dict(t=60, b=40),
+                    xaxis=dict(title=""),
+                    yaxis=dict(title="Cumulative $"),
+                    xaxis2=dict(title="Date"),
+                    yaxis2=dict(title="Daily PnL ($)")
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Trade Performance Metrics
+                st.markdown("---")
+                st.subheader("📌 Bot Trade Performance Summary")
+                
+                total_trades = len(df_closed)
+                wins = df_closed[df_closed["Realized PnL ($)"] > 0]
+                losses = df_closed[df_closed["Realized PnL ($)"] < 0]
+                win_rate = (len(wins) / total_trades) * 100 if total_trades > 0 else 0
+                avg_win = wins["Realized PnL ($)"].mean() if not wins.empty else 0
+                avg_loss = losses["Realized PnL ($)"].mean() if not losses.empty else 0
+                profit_factor = abs(wins["Realized PnL ($)"].sum() / losses["Realized PnL ($)"].sum()) if not losses.empty else float('inf')
+                
+                col1, col2, col3 = st.columns(3)
+                col1.metric("📈 Total Bot Trades", total_trades)
+                col2.metric("✅ Win Rate", f"{win_rate:.2f}%")
+                col3.metric("⚖️ Profit Factor", f"{profit_factor:.2f}")
+                
+                col4, col5 = st.columns(2)
+                col4.metric("🟢 Avg Win ($)", f"${avg_win:.2f}")
+                col5.metric("🔻 Avg Loss ($)", f"${avg_loss:.2f}")
+    
+    # Tab 7: Place Trade
+    with tab7:
+        st.subheader("🛒 Place Live Trade")
+        
+        # Dropdowns for symbol and side
+        symbol = st.selectbox(
+            "Symbol", 
+            ["BTCUSDT", "ETHUSDT", "DOGEUSDT", "SOLUSDT", "XRPUSDT"]
+        )
+        
+        side = st.selectbox(
+            "Side", 
+            ["Buy", "Sell"]
+        )
+        
+        # Quantity from sidebar position sizing (but editable)
+        qty = st.number_input(
+            "Quantity (auto-filled from sidebar)",
+            min_value=0.001,
+            value=max(0.001, float(qty_calc)),
+            step=0.001,
+            format="%.3f"
+        )
+        
+        # Place market order
+        if st.button("🚀 Place Market Order"):
+            try:
+                # Execute the order
+                order = session.place_order(
+                    category="linear",
+                    symbol=symbol,
+                    side=side,
+                    orderType="Market",
+                    qty=round(qty, 3),
+                    timeInForce="GoodTillCancel",
+                    reduceOnly=False,
+                    closeOnTrigger=False
+                )
+                
+                # Mariah confirms trade
+                mariah_speak(f"Order executed. {side} {qty} {symbol}.")
+                
+                # Speak if override is active
+                if st.session_state.get("override_risk_lock"):
+                    mariah_speak("Override active. Proceeding with caution.")
+                
+                # Log the trade
+                log_rsi_trade_to_csv(
+                    symbol=symbol,
+                    side=side,
+                    qty=round(qty, 3),
+                    entry_price=entry_price_sidebar,
+                    mode=mode
+                )
+                
+                st.success(f"✅ Order placed: {side} {qty} {symbol}")
+                st.write("Order Response:", order)
+                
+            except Exception as e:
+                mariah_speak("Order failed. Check trade parameters.")
+                st.error(f"❌ Order failed: {e}")
+    
+    # Tab 8: Mariah AI
+    with tab8:
+        st.subheader("🧠 Talk to Mariah")
+        
+        # Mode Colors + Dynamic Styling
+        mode_colors = {
+            "Scalping": "#00ffcc",  # Aqua Green
+            "Swing": "#ffaa00",     # Orange
+            "Momentum": "#ff4d4d"   # Red
+        }
+        
+        # Display Strategy Mode with Color
+        st.markdown(
+            f"<span style='font-size: 1.1rem; font-weight: 600;'>🚦 Current Strategy Mode: "
+            f"<span style='color: {mode_colors[mode]};'>{mode}</span></span>",
+            unsafe_allow_html=True
+        )
+        
+        # Text input
+        user_input = st.chat_input("Ask Mariah anything...", key="mariah_chat_input")
+        
+        if user_input:
+            st.chat_message("user").markdown(user_input)
+            override_on = st.session_state.get("override_risk_lock", False)
+            response = get_mariah_reply(user_input, open_pnl, closed_pnl, override_on)
+            st.chat_message("assistant").markdown(response)
+            mariah_speak(response)
+        
+        st.markdown("---")
+        st.markdown("🎙 Or press below to speak:")
+        
+        # Voice input (via mic)
+        if st.button("🎙 Speak to Mariah"):
+            voice_input = listen_to_user()
+            
+            if voice_input:
+                st.chat_message("user").markdown(voice_input)
+                override_on = st.session_state.get("override_risk_lock", False)
+                response = get_mariah_reply(voice_input, open_pnl, closed_pnl, override_on)
+                st.chat_message("assistant").markdown(response)
+                mariah_speak(response)
+    
+    # Additional tabs based on sidebar selection
+    if more_tab == "📡 Signal Scanner":
+        render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed)
+    elif more_tab == "📆 Daily PnL":
+        render_daily_pnl()
+    elif more_tab == "📈 Performance Trends":
+        render_performance_trends()
+    elif more_tab == "📊 Advanced Analytics": # New tab
+        # Load data for advanced analytics
+        df_daily_pnl = pd.read_csv(DAILY_PNL_SPLIT_FILE) if os.path.exists(DAILY_PNL_SPLIT_FILE) else pd.DataFrame()
+        render_advanced_analytics(df_trades, df_daily_pnl)
+    elif more_tab == "📆 Filter by Date":
+        render_filter_by_date()
+    elif more_tab == "📰 Crypto News":
+        render_crypto_news()
+    elif more_tab == "📡 On-Chain Data":
+        render_onchain_data()
+
+# =======================
+# MORE TOOLS TAB FUNCTIONS
+# =======================
+def render_daily_pnl():
+    """Render Daily PnL view"""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📆 Daily PnL Summary")
+    
+    try:
+        # Load daily PnL data
+        if os.path.exists(DAILY_PNL_SPLIT_FILE):
+            df_daily = pd.read_csv(DAILY_PNL_SPLIT_FILE)
+            df_daily["date"] = pd.to_datetime(df_daily["date"])
+            
+            # Calculate rolling averages
+            df_daily["bot_pnl_7d"] = df_daily["bot_pnl"].rolling(7).mean()
+            df_daily["manual_pnl_7d"] = df_daily["manual_pnl"].rolling(7).mean()
+            df_daily["total_pnl_7d"] = df_daily["total_pnl"].rolling(7).mean()
+            
+            # Calculate win rates
+            df_daily["bot_win_rate"] = np.where(
+                df_daily["bot_trades"] > 0,
+                df_daily["bot_wins"] / df_daily["bot_trades"] * 100,
+                0
+            )
+            df_daily["manual_win_rate"] = np.where(
+                df_daily["manual_trades"] > 0,
+                df_daily["manual_wins"] / df_daily["manual_trades"] * 100,
+                0
+            )
+            
+            # Display recent data
+            st.subheader("📊 Last 10 Days")
+            recent_data = df_daily.tail(10)
+            st.dataframe(recent_data[[
+                "date", "bot_pnl", "manual_pnl", "total_pnl",
+                "bot_trades", "manual_trades", "bot_win_rate", "manual_win_rate"
+            ]])
+            
+            # Create daily PnL chart
+            fig = go.Figure()
+            
+            fig.add_trace(go.Bar(
+                x=df_daily["date"],
+                y=df_daily["bot_pnl"],
+                name="Bot PnL",
+                marker_color="blue",
+                opacity=0.7
+            ))
+            
+            fig.add_trace(go.Bar(
+                x=df_daily["date"],
+                y=df_daily["manual_pnl"],
+                name="Manual PnL",
+                marker_color="green",
+                opacity=0.7
+            ))
+            
+            fig.update_layout(
+                title="Daily PnL - Bot vs Manual",
+                xaxis_title="Date",
+                yaxis_title="PnL ($)",
+                barmode="stack"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Win rate trends
+            fig2 = go.Figure()
+            
+            fig2.add_trace(go.Scatter(
+                x=df_daily["date"],
+                y=df_daily["bot_win_rate"],
+                mode="lines+markers",
+                name="Bot Win Rate (%)",
+                line=dict(color="blue")
+            ))
+            
+            fig2.add_trace(go.Scatter(
+                x=df_daily["date"],
+                y=df_daily["manual_win_rate"],
+                mode="lines+markers",
+                name="Manual Win Rate (%)",
+                line=dict(color="green")
+            ))
+            
+            fig2.update_layout(
+                title="Win Rate Trends",
+                xaxis_title="Date",
+                yaxis_title="Win Rate (%)"
+            )
+            
+            st.plotly_chart(fig2, use_container_width=True)
+            
+        else:
+            st.info("No daily PnL data available yet.")
+            
+    except Exception as e:
+        st.error(f"❌ Error loading daily PnL data: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def render_performance_trends():
+    """Render Performance Trends view"""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📈 Performance Trends Analysis")
+    
+    try:
+        # Load trades data
+        df_trades = load_trades()
+        
+        if df_trades.empty:
+            st.info("No trade data available for trend analysis.")
+            return
+        
+        # Ensure required columns
+        df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"], errors='coerce')
+        
+        # Split bot trades
+        df_bot_open, df_bot_closed = split_bot_trades(df_trades)
+        
+        if df_bot_closed.empty:
+            st.info("No closed trades available for analysis.")
+            return
+        
+        # Monthly trends
+        st.subheader("📅 Monthly Performance")
+        
+        df_bot_closed["month"] = df_bot_closed["timestamp"].dt.to_period("M")
+        monthly_stats = df_bot_closed.groupby("month").agg({
+            "Realized PnL ($)": ["sum", "mean", "count"],
+            "symbol": "count"
+        }).round(2)
+        
+        # Flatten column names
+        monthly_stats.columns = ["Total PnL", "Avg PnL", "Trade Count", "Symbols"]
+        monthly_stats = monthly_stats.reset_index()
+        monthly_stats["month"] = monthly_stats["month"].astype(str)
+        
+        # Calculate win rates
+        win_rates = []
+        for period in monthly_stats["month"]:
+            period_data = df_bot_closed[df_bot_closed["month"].astype(str) == period]
+            wins = len(period_data[period_data["Realized PnL ($)"] > 0])
+            total = len(period_data)
+            win_rate = (wins / total * 100) if total > 0 else 0
+            win_rates.append(win_rate)
+        
+        monthly_stats["Win Rate (%)"] = win_rates
+        st.dataframe(monthly_stats)
+        
+        # Performance by symbol
+        st.subheader("🎯 Performance by Symbol")
+        
+        symbol_performance = df_bot_closed.groupby("symbol").agg({
+            "Realized PnL ($)": ["sum", "mean", "count"]
+        }).round(2)
+        
+        symbol_performance.columns = ["Total PnL", "Avg PnL", "Trade Count"]
+        symbol_performance = symbol_performance.reset_index()
+        
+        # Add win rates by symbol
+        symbol_win_rates = []
+        for symbol in symbol_performance["symbol"]:
+            symbol_data = df_bot_closed[df_bot_closed["symbol"] == symbol]
+            wins = len(symbol_data[symbol_data["Realized PnL ($)"] > 0])
+            total = len(symbol_data)
+            win_rate = (wins / total * 100) if total > 0 else 0
+            symbol_win_rates.append(win_rate)
+        
+        symbol_performance["Win Rate (%)"] = symbol_win_rates
+        symbol_performance = symbol_performance.sort_values("Total PnL", ascending=False)
+        
+        st.dataframe(symbol_performance)
+        
+        # Strategy mode performance
+        if "mode" in df_bot_closed.columns:
+            st.subheader("⚙️ Performance by Strategy Mode")
+            
+            mode_performance = df_bot_closed.groupby("mode").agg({
+                "Realized PnL ($)": ["sum", "mean", "count"]
+            }).round(2)
+            
+            mode_performance.columns = ["Total PnL", "Avg PnL", "Trade Count"]
+            mode_performance = mode_performance.reset_index()
+            
+            st.dataframe(mode_performance)
+        
+        # Time of day analysis
+        st.subheader("🕐 Performance by Hour of Day")
+        
+        df_bot_closed["hour"] = df_bot_closed["timestamp"].dt.hour
+        hourly_pnl = df_bot_closed.groupby("hour")["Realized PnL ($)"].agg(["sum", "count"]).reset_index()
+        
+        fig = go.Figure()
+        
+        fig.add_trace(go.Bar(
+            x=hourly_pnl["hour"],
+            y=hourly_pnl["sum"],
+            name="PnL by Hour"
+        ))
+        
+        fig.update_layout(
+            title="Total PnL by Hour of Day",
+            xaxis_title="Hour (24h format)",
+            yaxis_title="Total PnL ($)"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"❌ Error analyzing performance trends: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def render_filter_by_date():
+    """Render Filter by Date view"""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📆 Filter Trades by Date Range")
+    
+    # Date range selection
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        start_date = st.date_input(
+            "Start Date",
+            value=pd.Timestamp.now().date() - pd.Timedelta(days=30)
+        )
+    
+    with col2:
+        end_date = st.date_input(
+            "End Date",
+            value=pd.Timestamp.now().date()
+        )
+    
+    if start_date > end_date:
+        st.error("❌ Start date must be before end date!")
+        return
+    
+    # Trade type selection
+    trade_types = st.multiselect(
+        "Select Trade Types",
+        ["Bot Trades", "Manual Trades"],
+        default=["Bot Trades", "Manual Trades"]
+    )
+    
+    # Apply filters
+    if st.button("🔍 Apply Filters"):
+        try:
+            all_trades = []
+            
+            # Filter bot trades
+            if "Bot Trades" in trade_types:
+                df_trades = load_trades()
+                if not df_trades.empty:
+                    df_trades["timestamp"] = pd.to_datetime(df_trades["timestamp"], errors='coerce')
+                    df_trades["trade_type"] = "Bot"
+                    all_trades.append(df_trades)
+            
+            # Filter manual trades
+            if "Manual Trades" in trade_types:
+                df_manual = load_closed_manual_trades()
+                if not df_manual.empty:
+                    # Standardize manual trades format
+                    df_manual_std = pd.DataFrame({
+                        "timestamp": pd.to_datetime(df_manual.get("timestamp", pd.Timestamp.now())),
+                        "symbol": df_manual.get("Symbol", df_manual.get("symbol", "")),
+                        "side": df_manual.get("Side", df_manual.get("side", "")),
+                        "qty": df_manual.get("Size", df_manual.get("qty", 0)),
+                        "entry_price": df_manual.get("Entry Price", df_manual.get("entry_price", 0)),
+                        "stop_loss": 0,
+                        "take_profit": df_manual.get("Exit Price", df_manual.get("take_profit", 0)),
+                        "note": "manual",
+                        "Realized PnL ($)": df_manual["Realized PnL ($)"],
+                        "Realized PnL (%)": df_manual["Realized PnL (%)"],
+                        "trade_type": "Manual"
+                    })
+                    all_trades.append(df_manual_std)
+            
+            if not all_trades:
+                st.warning("No trades found with selected filters.")
+                return
+            
+            # Combine all trades
+            df_combined = pd.concat(all_trades, ignore_index=True)
+            
+            # Apply date filter
+            df_filtered = df_combined[
+                (df_combined["timestamp"].dt.date >= start_date) &
+                (df_combined["timestamp"].dt.date <= end_date)
+            ]
+            
+            if df_filtered.empty:
+                st.warning("No trades found in the selected date range.")
+                return
+            
+            # Display summary
+            st.subheader("📊 Filtered Results Summary")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Trades", len(df_filtered))
+            
+            with col2:
+                total_pnl = df_filtered["Realized PnL ($)"].sum()
+                st.metric("Total PnL", f"${total_pnl:,.2f}")
+            
+            with col3:
+                wins = len(df_filtered[df_filtered["Realized PnL ($)"] > 0])
+                win_rate = (wins / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+                st.metric("Win Rate", f"{win_rate:.2f}%")
+            
+            with col4:
+                avg_pnl = df_filtered["Realized PnL ($)"].mean()
+                st.metric("Avg PnL", f"${avg_pnl:.2f}")
+            
+            # Display trades
+            st.subheader("📋 Filtered Trades")
+            
+            # Create display dataframe
+            display_df = df_filtered[[
+                "timestamp", "symbol", "side", "qty", "entry_price",
+                "stop_loss", "take_profit", "note", "Realized PnL ($)",
+                "Realized PnL (%)", "trade_type"
+            ]].copy()
+            
+            # Sort by timestamp
+            display_df = display_df.sort_values("timestamp", ascending=False)
+            
+            st.dataframe(display_df)
+            
+            # Create visualization
+            st.subheader("📈 PnL Over Time")
+            
+            # Daily PnL aggregation
+            df_filtered["date"] = df_filtered["timestamp"].dt.date
+            daily_pnl = df_filtered.groupby(["date", "trade_type"])["Realized PnL ($)"].sum().reset_index()
+            
+            fig = px.bar(
+                daily_pnl,
+                x="date",
+                y="Realized PnL ($)",
+                color="trade_type",
+                title="Daily PnL by Trade Type"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+        except Exception as e:
+            st.error(f"❌ Error filtering trades: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def render_crypto_news():
+    """Render the Crypto News tab."""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📰 Real-Time Crypto News")
+    
+    try:
+        # Get crypto news from external API
+        news_items = get_crypto_news()
+        
+        if not news_items:
+            st.info("No news available right now.")
+        else:
+            # Create tabs for different news categories
+            tabs = st.tabs(["📰 All News", "🚨 Alerts", "📈 Market Analysis"])
+            
+            with tabs[0]:
+                st.subheader("Latest Crypto News")
+                
+                for item in news_items:
+                    title = item.get("title", "No title")
+                    url = item.get("url", "#")
+                    published = item.get("published", "Unknown")
+                    source = item.get("source", "Unknown")
+                    description = item.get("description", "")
+                    
+                    # Determine alert level based on keywords
+                    alert = ""
+                    alert_color = "white"
+                    
+                    title_lower = title.lower()
+                    if any(keyword in title_lower for keyword in ["hack", "exploit", "attack", "stolen"]):
+                        alert = "🚨 SECURITY ALERT "
+                        alert_color = "red"
+                    elif any(keyword in title_lower for keyword in ["bullish", "moon", "rally", "surge"]):
+                        alert = "📈 BULLISH "
+                        alert_color = "green"
+                    elif any(keyword in title_lower for keyword in ["bearish", "crash", "dump", "fall"]):
+                        alert = "📉 BEARISH "
+                        alert_color = "orange"
+                    
+                    # Create news card
+                    st.markdown(f"""
+                    <div style="border: 1px solid rgba(255,255,255,0.1); 
+                                border-radius: 10px; 
+                                padding: 15px; 
+                                margin-bottom: 15px;
+                                background-color: rgba(255,255,255,0.02);">
+                        <h4>
+                            <span style="color: {alert_color};">{alert}</span>
+                            <a href="{url}" target="_blank" style="color: #00fff5; text-decoration: none;">
+                                {title}
+                            </a>
+                        </h4>
+                        <p style="color: #cccccc; font-size: 0.9rem;">
+                            {description[:200]}{'...' if len(description) > 200 else ''}
+                        </p>
+                        <p style="color: #888; font-size: 0.8rem;">
+                            📅 {published} | 📰 {source}
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            with tabs[1]:
+                st.subheader("Security & High-Impact Alerts")
+                
+                # Filter for security-related news
+                security_alerts = [
+                    item for item in news_items
+                    if any(keyword in item.get("title", "").lower() 
+                          for keyword in ["hack", "exploit", "attack", "stolen", "breach", "scam"])
+                ]
+                
+                if security_alerts:
+                    for alert in security_alerts:
+                        st.error(f"🚨 **{alert.get('source', 'Unknown')}**: {alert.get('title', 'No title')}")
+                        st.write(f"🔗 [Read more]({alert.get('url', '#')})")
+                        st.markdown("---")
+                else:
+                    st.success("✅ No security alerts at this time.")
+            
+            with tabs[2]:
+                st.subheader("Market Analysis & Insights")
+                
+                # Filter for market analysis
+                analysis_news = [
+                    item for item in news_items
+                    if any(keyword in item.get("title", "").lower() 
+                          for keyword in ["analysis", "prediction", "forecast", "outlook", "technical"])
+                ]
+                
+                if analysis_news:
+                    for item in analysis_news:
+                        title = item.get("title", "No title")
+                        url = item.get("url", "#")
+                        source = item.get("source", "Unknown")
+                        
+                        st.markdown(f"""
+                        <div style="border-left: 4px solid #00fff5; 
+                                    padding-left: 15px; 
+                                    margin-bottom: 15px;">
+                            <h4><a href="{url}" target="_blank" style="color: #00fff5; text-decoration: none;">{title}</a></h4>
+                            <p style="color: #888;">📰 {source}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("No market analysis articles available.")
+                    
+    except Exception as e:
+        st.error(f"❌ Failed to fetch crypto news: {e}")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def render_onchain_data():
+    """Render On-Chain Data tab."""
+    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+    st.subheader("📡 ETH Gas + Block Info (Etherscan)")
+    
+    try:
+        # Get on-chain data
+        gas = get_eth_gas()
+        block = get_block_info()
+        
+        # Gas prices section
+        st.subheader("⛽ Current Gas Prices")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("🐌 Safe Gas", f"{gas['low']} Gwei", help="Recommended for non-urgent transactions")
+        
+        with col2:
+            st.metric("⚡ Standard Gas", f"{gas['avg']} Gwei", help="Recommended for normal transactions")
+        
+        with col3:
+            st.metric("🚀 Fast Gas", f"{gas['high']} Gwei", help="Recommended for urgent transactions")
+        
+        with col4:
+            st.metric("📦 Latest Block", f"#{block}", help="Most recent block number")
+        
+        # Gas price history chart
+        if 'gas_history' in st.session_state:
+            st.subheader("📈 Gas Price History")
+            
+            # Add current data to history
+            current_time = pd.Timestamp.now()
+            new_data = pd.DataFrame({
+                'timestamp': [current_time],
+                'low': [gas['low']],
+                'avg': [gas['avg']],
+                'high': [gas['high']]
+            })
+            
+            # Keep last 100 data points
+            st.session_state.gas_history = pd.concat([st.session_state.gas_history, new_data]).tail(100)
+        else:
+            # Initialize with current data
+            st.session_state.gas_history = pd.DataFrame({
+                'timestamp': [pd.Timestamp.now()],
+                'low': [gas['low']],
+                'avg': [gas['avg']],
+                'high': [gas['high']]
+            })
+        
+        # Create gas price chart
+        fig = go.Figure()
+        
+        gas_history = st.session_state.gas_history
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['low'],
+            mode='lines+markers',
+            name='Safe Gas',
+            line=dict(color='green')
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['avg'],
+            mode='lines+markers',
+            name='Standard Gas',
+            line=dict(color='orange')
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=gas_history['timestamp'],
+            y=gas_history['high'],
+            mode='lines+markers',
+            name='Fast Gas',
+            line=dict(color='red')
+        ))
+        
+        fig.update_layout(
+            title="Gas Price Trends",
+            xaxis_title="Time",
+            yaxis_title="Gas Price (Gwei)",
+            height=400
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Network stats
+        st.subheader("🌐 Network Statistics")
+        
+        # Get additional network data (if available)
+        try:
+            # Placeholder for additional network stats
+            # In a real implementation, you would fetch:
+            # - Network congestion
+            # - Average block time
+            # - Pending transactions
+            # - MEV data
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.metric("⏱️ Avg Block Time", "12-15 seconds", help="Current average block confirmation time")
+                st.metric("🏗️ Network Congestion", "Medium", help="Based on pending transactions")
+            
+            with col2:
+                st.metric("💸 Average Transaction Fee", f"${(gas['avg'] * 21000 * 2000 / 1e9):.2f}", help="Estimated for standard transfer")
+                st.metric("⏳ Pending Txs", "~50,000", help="Approximate pending transactions")
+            
+        except Exception as e:
+            st.warning(f"Additional network stats unavailable: {e}")
+        
+        # Gas optimization tips
+        st.subheader("💡 Gas Optimization Tips")
+        
+        st.markdown("""
+        **Tips to save on gas fees:**
+        
+        - 🕐 **Optimal timing**: Gas prices are typically lower during weekends and late night hours (UTC)
+        - 📊 **Monitor trends**: Use the chart above to identify low-gas periods
+        - 🔄 **Batch transactions**: Combine multiple operations when possible
+        - ⚙️ **Optimize smart contracts**: Use more efficient code patterns
+        - 🎯 **Set appropriate gas limits**: Avoid over-estimating gas requirements
+        """)
+        
+    except Exception as e:
+        st.error(f"❌ Failed to fetch on-chain data: {e}")
+        st.info("Please check your internet connection and API keys.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+# =======================
+# RUN THE DASHBOARD
+# =======================
+if __name__ == "__main__":
+    main()
+>>>>>>> d3778dd58f7a49990e2e6a3ac1aa0ddd82ee06c3

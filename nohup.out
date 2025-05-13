@@ -1,0 +1,173 @@
+ * Serving Flask app 'mariah-webhook'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://104.248.90.64:5001
+Press CTRL+C to quit
+Already up to date.
+140.82.115.12 - - [09/May/2025 23:17:16] "POST /webhook HTTP/1.1" 200 -
+104.234.115.239 - - [10/May/2025 00:21:59] code 400, message Bad HTTP/0.9 request type ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x036FbýX7')
+104.234.115.239 - - [10/May/2025 00:21:59] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x036FbýX7\x09ô\x81Öé\x81¯ôCvî4\x07X&±Ø³\x81*u¸×~" HTTPStatus.BAD_REQUEST -
+104.234.115.239 - - [10/May/2025 00:22:17] "GET / HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:24] "GET /manage/account/login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:31] "GET /admin/index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:38] "GET /index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:45] "GET /+CSCOE+/logon.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:52] "GET /cgi-bin/login.cgi HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:22:59] "GET /login.htm HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:06] "GET /login.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:13] "GET /login.jsp HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:20] "GET /login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:27] "GET /doc/index.html HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:34] "GET /remote/login HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:41] "GET /admin/login.asp HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:48] "GET /web/ HTTP/1.1" 404 -
+104.234.115.239 - - [10/May/2025 00:23:55] "GET /webpages/login.html HTTP/1.1" 404 -
+64.62.197.30 - - [10/May/2025 01:49:49] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00{\x01\x00\x00w\x03\x03ÜÞ¤QÖ\x834ôÀ©0±\x032æ\x96àc\x86ü'9¼~ê\x87ö\x05\x19.·_\x00\x00\x1aÀ/À+À\x11À\x07À\x13À")
+64.62.197.30 - - [10/May/2025 01:49:49] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03ÜÞ¤QÖ\x834ôÀ©0±\x032æ\x96àc\x86ü'9¼~ê\x87ö\x05\x19.·_\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+106.75.5.138 - - [10/May/2025 04:02:23] "GET / HTTP/1.1" 404 -
+106.75.136.216 - - [10/May/2025 04:07:49] "GET / HTTP/1.1" 404 -
+106.75.136.216 - - [10/May/2025 04:07:49] "GET /favicon.ico HTTP/1.1" 404 -
+147.185.132.174 - - [10/May/2025 09:11:07] "GET / HTTP/1.1" 404 -
+54.37.81.238 - - [10/May/2025 12:25:40] "GET / HTTP/1.1" 404 -
+54.37.81.238 - - [10/May/2025 15:16:50] "GET / HTTP/1.1" 404 -
+52.83.111.57 - - [10/May/2025 15:42:29] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 15:54:05] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 15:56:37] "GET / HTTP/1.1" 404 -
+18.220.7.77 - - [10/May/2025 16:00:28] code 400, message Bad request syntax ('SSH-2.0-Go')
+18.220.7.77 - - [10/May/2025 16:00:28] "SSH-2.0-Go" HTTPStatus.BAD_REQUEST -
+18.220.7.77 - - [10/May/2025 16:02:05] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00{\x01\x00\x00w\x03\x03\x96CüÌ\x06û\xadÓÄ¦´¨íhØk\x97r/h\x91\x81®óùz\x91=°'\x7få\x00\x00\x1aÀ/À+À\x11À\x07À\x13À")
+18.220.7.77 - - [10/May/2025 16:02:05] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03\x96CüÌ\x06û­ÓÄ¦´¨íhØk\x97r/h\x91\x81®óùz\x91=°'\x7få\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+199.45.155.91 - - [10/May/2025 16:28:08] code 400, message Bad request version ('À\x14À')
+199.45.155.91 - - [10/May/2025 16:28:08] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03ò¼ÔÜÏÁ.+DðÛí\x14·Ü\x7fX\x10E!\x09=D\x8bÁúTëeMmq )é²\x02Þ^º(\x0e\x03Õ\x95n\x9eK\x0b°go\x02\x98£\x1a&\x94à2ý\x8d\x987#\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+199.45.155.91 - - [10/May/2025 16:28:11] "GET / HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:17] "GET / HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:17] code 505, message Invalid HTTP version (2.0)
+199.45.155.91 - - [10/May/2025 16:28:17] "PRI * HTTP/2.0" HTTPStatus.HTTP_VERSION_NOT_SUPPORTED -
+199.45.155.91 - - [10/May/2025 16:28:21] "GET /favicon.ico HTTP/1.1" 404 -
+199.45.155.91 - - [10/May/2025 16:28:21] code 400, message Bad request version ('À\x14À')
+199.45.155.91 - - [10/May/2025 16:28:21] "\x16\x03\x01\x00÷\x01\x00\x00ó\x03\x03LÁí®#\x9d\x0b×\x83é¦\x15 \x11g5G+ÄÍa|H\x03PM\x02OýR\x91ð ´\x93àm<uIºßS8r84´õ1çÊ,gdWññézµV\x8e\x97Î\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+135.233.112.24 - - [10/May/2025 22:01:47] "GET /v2/ HTTP/1.1" 404 -
+195.184.76.12 - - [11/May/2025 04:08:07] code 400, message Bad request version ('À#À¬À®À+À')
+195.184.76.12 - - [11/May/2025 04:08:07] "\x16\x03\x03\x01¦\x01\x00\x01¢\x03\x03!Ñ±\x138ç¹+ÃÒ\x91sê)É@¤á$\x0c\x11\x07øÚOcÒÑØ6\x0bÖ &1\x111ÞÍ\x11ÂË\x13ß\x17Ö°e$\x08AóâÉ-6\x11##Ö?\x822\x88\x98\x00\x8a\x00\x16\x003\x00gÀ\x9eÀ¢\x00\x9e\x009\x00kÀ\x9fÀ£\x00\x9f\x00E\x00¾\x00\x88\x00Ä\x00\x9aÀ\x08À\x09À#À¬À®À+À" HTTPStatus.BAD_REQUEST -
+195.184.76.237 - - [11/May/2025 04:08:11] "GET / HTTP/1.1" 404 -
+195.184.76.142 - - [11/May/2025 04:20:06] "GET /favicon.ico HTTP/1.1" 404 -
+68.183.175.201 - - [11/May/2025 06:09:13] code 400, message Bad request version ('\x00{\x00\x00\x00\x00\x00A\x00A\x00\x00\x00-\x00\x00A\x00\x00\x00-\x00\x00\x00a\x00\x00-\x00A\x00A\x00\x00A\x00-\x00\x00\x00\x00\x00A\x00\x00A\x00A\x00\x00A\x00A\x00\x00}\x00\x00\x00àmß_')
+68.183.175.201 - - [11/May/2025 06:09:13] "\x01\x00\x00ýÎú\x0b° \x00\x00\x00MMS\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12\x00\x00\x00\x01\x00\x03\x00ðððð\x0b\x00\x04\x00\x1c\x00\x03\x00N\x00S\x00P\x00l\x00a\x00y\x00e\x00r\x00/\x009\x00.\x00\x00.\x00\x00.\x02\x009\x008\x00\x00;\x00 \x00{\x00\x00\x00\x00\x00A\x00A\x00\x00\x00-\x00\x00A\x00\x00\x00-\x00\x00\x00a\x00\x00-\x00A\x00A\x00\x00A\x00-\x00\x00\x00\x00\x00A\x00\x00A\x00A\x00\x00A\x00A\x00\x00}\x00\x00\x00àmß_" HTTPStatus.BAD_REQUEST -
+68.183.175.201 - - [11/May/2025 06:09:13] "GET / HTTP/1.0" 404 -
+199.45.155.90 - - [11/May/2025 07:04:42] code 400, message Bad request version ('\\\x99\x08')
+199.45.155.90 - - [11/May/2025 07:04:42] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03»Qlì\x85ð\x94F\x7fÿ%ÿP¾ß¢!2\x1bO·Ä.¢4ßÑÓ¸Z1. °X¸\x96ü.\x85\\\x99\x08" HTTPStatus.BAD_REQUEST -
+199.45.155.90 - - [11/May/2025 07:04:46] "GET / HTTP/1.1" 404 -
+199.45.155.90 - - [11/May/2025 07:04:50] "GET / HTTP/1.1" 404 -
+199.45.155.90 - - [11/May/2025 07:04:50] code 505, message Invalid HTTP version (2.0)
+199.45.155.90 - - [11/May/2025 07:04:50] "PRI * HTTP/2.0" HTTPStatus.HTTP_VERSION_NOT_SUPPORTED -
+199.45.155.90 - - [11/May/2025 07:04:55] "GET /favicon.ico HTTP/1.1" 404 -
+199.45.155.90 - - [11/May/2025 07:04:55] code 400, message Bad request version ('À\x14À')
+199.45.155.90 - - [11/May/2025 07:04:55] "\x16\x03\x01\x00÷\x01\x00\x00ó\x03\x03\x14;\x17¯\x13\x94ïSpãÍá\x1f´¢ï\x9fßQ\x95ôë\x08\x8cµ©\x116Ñûdª «­¡\x87Q`\x96°]5+B¬X5k\x11K\x14Õé­ÅÊºGÈyx3&%\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+205.210.31.87 - - [11/May/2025 07:23:16] "GET / HTTP/1.1" 404 -
+147.185.132.150 - - [11/May/2025 07:51:40] code 400, message Bad request version ('À\x13À')
+147.185.132.150 - - [11/May/2025 07:51:40] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03"Ä\x99æ \x03\x95\x13ØR+ý\x134FG\x09\x88äB\x95¯9×ÿ\x09_ÅE P3 9\x97äd.ÈêÂ)ª×\x8e)Hþî\x0fbßÿâG\x9e\x13Å\x87â®Adig\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+147.185.132.150 - - [11/May/2025 07:51:40] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03hVv6×q\x02ø¶¿Gâ\x0fP]\x83\x05Kõ¦½\x9fH²\x95Ní£8ö\x9aJ\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+147.185.132.150 - - [11/May/2025 07:51:40] "\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03hVv6×q\x02ø¶¿Gâ\x0fP]\x83\x05Kõ¦½\x9fH²\x95Ní£8ö\x9aJ\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À\x09À(À$À\x14À" HTTPStatus.BAD_REQUEST -
+51.91.174.244 - - [11/May/2025 07:58:07] code 400, message Bad request version ('À#À¬À®À+À')
+51.91.174.244 - - [11/May/2025 07:58:07] "\x16\x03\x03\x01¦\x01\x00\x01¢\x03\x03ð\x97ÔìíÌf6\x87³NjPÛòÍ(\x9d$È#Ù°qÁbf#3y\x07~ \x91üñ\x8f,Ï·\x99³ôûL6tð\x87Ë\x7f\x7fý?;\x81/'K8Ó®ü«v\x00\x8a\x00\x16\x003\x00gÀ\x9eÀ¢\x00\x9e\x009\x00kÀ\x9fÀ£\x00\x9f\x00E\x00¾\x00\x88\x00Ä\x00\x9aÀ\x08À\x09À#À¬À®À+À" HTTPStatus.BAD_REQUEST -
+51.91.174.255 - - [11/May/2025 07:58:10] "GET / HTTP/1.1" 404 -
+91.196.152.116 - - [11/May/2025 08:05:53] "GET /favicon.ico HTTP/1.1" 404 -
+Already up to date.
+140.82.115.111 - - [11/May/2025 12:38:04] "POST /webhook HTTP/1.1" 200 -
+Already up to date.
+140.82.115.154 - - [11/May/2025 13:27:14] "POST /webhook HTTP/1.1" 200 -
+Already up to date.
+140.82.115.26 - - [11/May/2025 13:32:28] "POST /webhook HTTP/1.1" 200 -
+Already up to date.
+140.82.115.76 - - [11/May/2025 13:38:11] "POST /webhook HTTP/1.1" 200 -
+65.49.20.68 - - [11/May/2025 14:23:36] code 400, message Bad request version ('À\x14À')
+65.49.20.68 - - [11/May/2025 14:23:36] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03\x7f\x04ç\x1aXÜM\x82òÄíùU/\x89fq\x8fh»ÁMåÑj÷Y\x9bqÙ\x9e \x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+54.37.81.238 - - [11/May/2025 16:12:59] "GET / HTTP/1.1" 404 -
+80.82.70.133 - - [11/May/2025 16:20:55] code 400, message Bad request version ("¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À")
+80.82.70.133 - - [11/May/2025 16:20:55] "\x16\x03\x02\x01o\x01\x00\x01k\x03\x02RHÅ\x1a#÷:Nßâ´\x82/ÿ\x09T\x9f§Äy°hÆ\x13\x8c¤\x1c="á\x1a\x98 \x84´,\x85¯nãY»bhlÿ(=':©\x82ÙoÈ¢×\x93\x98´ï\x80å¹\x90\x00(À" HTTPStatus.BAD_REQUEST -
+162.142.125.202 - - [11/May/2025 16:39:17] code 400, message Bad request version ('À\x14À')
+162.142.125.202 - - [11/May/2025 16:39:17] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03Åã´}\x19G\x87Þ\x11îA.´­U\x09ù6á-\x99\x85\x9blÿ-¾È0¡r] <\x8dæ¹\x10Ó\x81\x16ÇqÑþ[-h\x19®\x9e¨51¤ö$è=\x96Ê\x94ñM°\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+162.142.125.202 - - [11/May/2025 16:39:28] "GET / HTTP/1.1" 404 -
+162.142.125.202 - - [11/May/2025 16:39:33] "GET / HTTP/1.1" 404 -
+162.142.125.202 - - [11/May/2025 16:39:34] code 505, message Invalid HTTP version (2.0)
+162.142.125.202 - - [11/May/2025 16:39:34] "PRI * HTTP/2.0" HTTPStatus.HTTP_VERSION_NOT_SUPPORTED -
+162.142.125.202 - - [11/May/2025 16:39:43] "GET /favicon.ico HTTP/1.1" 404 -
+162.142.125.202 - - [11/May/2025 16:39:45] code 400, message Bad request version ('À\x14À')
+162.142.125.202 - - [11/May/2025 16:39:45] "\x16\x03\x01\x00÷\x01\x00\x00ó\x03\x03®8Ú\x8dc\x17\x9eý\x9f.\x1buéVlk¡bñbeÄË[ÙÙWn¿º\x09E #\x10\x87Ö\x90â\x91\x09\x94¹ 1\x95ÝõÖý\x0e¤ýN\x13äª\x17X®ã\x0cÇ\x08R\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+3.137.183.255 - - [11/May/2025 18:22:58] "GET / HTTP/1.1" 404 -
+3.137.183.255 - - [11/May/2025 18:25:43] "GET / HTTP/1.1" 404 -
+3.137.183.255 - - [11/May/2025 18:29:24] code 400, message Bad request syntax ('SSH-2.0-Go')
+3.137.183.255 - - [11/May/2025 18:29:24] "SSH-2.0-Go" HTTPStatus.BAD_REQUEST -
+3.137.183.255 - - [11/May/2025 18:30:50] code 400, message Bad request version ('À\x14À')
+3.137.183.255 - - [11/May/2025 18:30:50] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03Ãv\x1an¸{\x80ó³I¤Ñù­r\x84­B4TÌkí\x11\x8e\x92 Al\x0d:\x15\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+147.185.132.123 - - [11/May/2025 18:42:58] "GET / HTTP/1.1" 404 -
+139.99.35.40 - - [12/May/2025 00:22:49] code 400, message Bad request version ('¾')
+139.99.35.40 - - [12/May/2025 00:22:49] "\x16\x03\x03\x01¦\x01\x00\x01¢\x03\x03\x9dÂ\x8d\x9d\x10\x0d®¯½=#\x13H=M ¾" HTTPStatus.BAD_REQUEST -
+139.99.35.44 - - [12/May/2025 00:22:56] "GET / HTTP/1.1" 404 -
+From https://github.com/TheCryptoCapital/Mariah-s-Dashboard
+   aa7b7cdc..93fc0185  main       -> origin/main
+Updating aa7b7cdc..93fc0185
+Fast-forward
+ Landing Page | 2271 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 2271 insertions(+)
+ create mode 100644 Landing Page
+140.82.115.55 - - [12/May/2025 00:26:01] "POST /webhook HTTP/1.1" 200 -
+15.235.189.155 - - [12/May/2025 00:31:44] "GET /favicon.ico HTTP/1.1" 404 -
+185.224.128.17 - - [12/May/2025 00:47:56] "CONNECT example.com:80 HTTP/1.1" 404 -
+185.224.128.17 - - [12/May/2025 00:48:11] code 400, message Bad request syntax ('\x04\x01\x00P\x00\x00\x00\x01\x00example.com\x00')
+185.224.128.17 - - [12/May/2025 00:48:11] code 400, message Bad request syntax ('\x05\x01\x00')
+185.224.128.17 - - [12/May/2025 00:48:11] "\x04\x01\x00P\x00\x00\x00\x01\x00example.com\x00" HTTPStatus.BAD_REQUEST -
+185.224.128.17 - - [12/May/2025 00:48:11] "\x05\x01\x00" HTTPStatus.BAD_REQUEST -
+147.185.132.45 - - [12/May/2025 01:53:38] code 400, message Bad request version ('À\x13À')
+147.185.132.45 - - [12/May/2025 01:53:38] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x86ãf\x06]Ò~û»l\x07ÙùÝmõ.\x94»¢i\x86\x1aØpM\x8cLDanr wd#VàXF"\x80vÔG*ä\x1cÝñ·c\x07)\x97êêRPô\x1b§\x89\x0f\x96\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+147.185.132.45 - - [12/May/2025 01:53:38] code 400, message Bad HTTP/0.9 request type ("\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03â\x84Àp~\x96\x8bò'ÓºJ¥TGVé\x00áÛárû\x7f<1op¦\x8d\x9fê\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À")
+147.185.132.45 - - [12/May/2025 01:53:38] "\x16\x03\x01\x00Ê\x01\x00\x00Æ\x03\x03â\x84Àp~\x96\x8bò'ÓºJ¥TGVé\x00áÛárû\x7f<1op¦\x8d\x9fê\x00\x00hÌ\x14Ì\x13À/À+À0À,À\x11À\x07À'À#À\x13À\x09À(À$À\x14À" HTTPStatus.BAD_REQUEST -
+Already up to date.
+140.82.115.79 - - [12/May/2025 02:41:25] "POST /webhook HTTP/1.1" 200 -
+80.66.75.151 - - [12/May/2025 02:46:40] code 400, message Bad request syntax ('\x01\x01æ')
+80.66.75.151 - - [12/May/2025 02:46:40] "\x01\x01æ" HTTPStatus.BAD_REQUEST -
+15.204.37.31 - - [12/May/2025 02:50:24] code 400, message Bad request syntax ('\x16\x03\x03\x01¦\x01\x00\x01¢\x03\x03\x171\x12\x07Î<±³\x96\x1e')
+15.204.37.31 - - [12/May/2025 02:50:24] "\x16\x03\x03\x01¦\x01\x00\x01¢\x03\x03\x171\x12\x07Î<±³\x96\x1e" HTTPStatus.BAD_REQUEST -
+15.204.37.30 - - [12/May/2025 02:50:27] "GET / HTTP/1.1" 404 -
+195.184.76.152 - - [12/May/2025 02:57:09] "GET /favicon.ico HTTP/1.1" 404 -
+From https://github.com/TheCryptoCapital/Mariah-s-Dashboard
+   93fc0185..0e255fa2  main       -> origin/main
+You are not currently on a branch.
+Please specify which branch you want to merge with.
+See git-pull(1) for details.
+
+    git pull <remote> <branch>
+
+140.82.115.79 - - [12/May/2025 03:14:55] "POST /webhook HTTP/1.1" 200 -
+36.156.22.4 - - [12/May/2025 07:41:00] code 400, message Bad request syntax ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x9c,\x17ö\x10\x94')
+36.156.22.4 - - [12/May/2025 07:41:00] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x9c,\x17ö\x10\x94" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:00] "GET / HTTP/1.1" 404 -
+36.156.22.4 - - [12/May/2025 07:41:01] code 400, message Bad request version ('À\x13À')
+36.156.22.4 - - [12/May/2025 07:41:01] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03äüër3ðÊ]\x84¥Î\x7fïÑs\x01%°ôº\x85í^\x8dmzò­vçmé \x1b÷ïÙXÈ&rg³Ïç\x93\x92öN\x0e\x99ãæ\x08ö\x98&ùWo{6\x9b\x1fò\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:01] code 400, message Bad request version ('À\x13À')
+36.156.22.4 - - [12/May/2025 07:41:01] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03c4\x90¤~3X]\x07Ö\x1aTòÕ[´\x03a¼t?\x89a0fK\x8e\x02c\x8dQü ëÜVWÔüË\x85ÓX/\x8dOeeÒÚA\x04\x02Ð¢\x88½£x\x14ª\x8fI*\x1c\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:02] code 400, message Bad request version ('À\x13À')
+36.156.22.4 - - [12/May/2025 07:41:02] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x8eÈ¯Ëß\x85Õídý9ßºüy¼£\x87\x83j?3À\x05f\x82\x91 \x97\x1böQ t¨ùy\x8f8Ã\x91\x80o\x13ÃS\x11ÞUì/\x15hã$\x1d[Ô$î\x06Y-DO\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:02] code 400, message Bad request syntax ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x91\x01IÊOa,²\x97m¶yM')
+36.156.22.4 - - [12/May/2025 07:41:02] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\x91\x01IÊOa,²\x97m¶yM" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:03] code 400, message Bad request version ('À\x13À')
+36.156.22.4 - - [12/May/2025 07:41:03] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03\\4ú\x9d¬ùáÉÏ\x85x\x0cx£\x89\x83\x96ONT\x95\x96\x8e\x9cé\x16:¦ê°\x91¤ \x85yÕXHs¡\x1cÆ\x09î\x027¬ÿÏ(Z+®\x01'\x87tÍØ>ç®îG·\x00&À+À/À,À0Ì©Ì¨À\x09À\x13À" HTTPStatus.BAD_REQUEST -
+36.156.22.4 - - [12/May/2025 07:41:03] code 400, message Bad request syntax ('\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03¶\x83}\x88\x18å\\¡\x98ñºeý¯¹\x81ïBD\x18¿\x8bäÕÝ\x9fÊò½&Fñ ')
+36.156.22.4 - - [12/May/2025 07:41:03] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03¶\x83}\x88\x18å\\¡\x98ñºeý¯¹\x81ïBD\x18¿\x8bäÕÝ\x9fÊò½&Fñ " HTTPStatus.BAD_REQUEST -
+184.105.247.196 - - [12/May/2025 09:36:00] code 400, message Bad request version ('À\x14À')
+184.105.247.196 - - [12/May/2025 09:36:00] "\x16\x03\x01\x00{\x01\x00\x00w\x03\x03ª8ß\x96¦yÖL¹µ?'\x10 Á¿©[çÈRU\x93òK\x07 ú«\x87 ½\x00\x00\x1aÀ/À+À\x11À\x07À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+54.37.81.238 - - [12/May/2025 15:36:12] "GET / HTTP/1.1" 404 -
+152.32.188.177 - - [12/May/2025 16:27:26] "GET / HTTP/1.1" 404 -
+199.45.154.119 - - [12/May/2025 16:38:45] code 400, message Bad request version ('gL0µ$ÈK·P3é<ü\x8b;\x99â~c.')
+199.45.154.119 - - [12/May/2025 16:38:45] "\x16\x03\x01\x00î\x01\x00\x00ê\x03\x03À¼º\x94Äv?ã\x0b\x1bûr\x00¹Ö\x8bCÃÂ\x09$ò\x96\x1f\x91 ÙÌ1vÔ\x96 gL0µ$ÈK·P3é<ü\x8b;\x99â~c." HTTPStatus.BAD_REQUEST -
+199.45.154.119 - - [12/May/2025 16:38:49] "GET / HTTP/1.1" 404 -
+199.45.154.119 - - [12/May/2025 16:38:52] "GET / HTTP/1.1" 404 -
+199.45.154.119 - - [12/May/2025 16:38:53] code 505, message Invalid HTTP version (2.0)
+199.45.154.119 - - [12/May/2025 16:38:53] "PRI * HTTP/2.0" HTTPStatus.HTTP_VERSION_NOT_SUPPORTED -
+199.45.154.119 - - [12/May/2025 16:38:57] "GET /favicon.ico HTTP/1.1" 404 -
+199.45.154.119 - - [12/May/2025 16:38:57] code 400, message Bad request version ('À\x14À')
+199.45.154.119 - - [12/May/2025 16:38:57] "\x16\x03\x01\x00÷\x01\x00\x00ó\x03\x03\x8f\x02Ý\x8a³Þ\x9bvÌü\x9bÄ´ÕÜýrôµ@P\x89\x12zX\x07¼®j+Nd è¡~ªmE\x91ù;$M\x82L` \x87ñ0Ò@¿Ú\x1aCÁò\x87:\x17¹ñ\x8e\x00&Ì¨Ì©À/À0À+À,À\x13À\x09À\x14À" HTTPStatus.BAD_REQUEST -
+170.62.100.18 - - [12/May/2025 17:40:35] "GET / HTTP/1.1" 404 -
+198.235.24.207 - - [12/May/2025 19:42:04] "GET / HTTP/1.1" 404 -
