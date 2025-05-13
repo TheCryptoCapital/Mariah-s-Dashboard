@@ -564,7 +564,7 @@ def create_crypto_ticker(session):
     
     .ticker-scroll {
         display: inline-block;
-        animation: scroll 60s linear infinite;
+        animation: scroll 120s linear infinite;  /* Increased to 120s for more symbols */
     }
     
     @keyframes scroll {
@@ -587,8 +587,14 @@ def create_crypto_ticker(session):
     </style>
     """, unsafe_allow_html=True)
     
-    # Get crypto data
-    crypto_symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"]
+    # Expanded to top 20 crypto symbols
+    crypto_symbols = [
+        "BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT",
+        "ADAUSDT", "MATICUSDT", "BNBUSDT", "LTCUSDT", "UNIUSDT",
+        "XLMUSDT", "DOTUSDT", "DYDXUSDT", "NEARUSDT", "FILUSDT",
+        "RNDRUSDT", "ETCUSDT", "BCHUSDT", "LDOUSDT", "GALAUSDT"
+    ]
+    
     ticker_items = []
     
     for symbol in crypto_symbols:
@@ -615,6 +621,7 @@ def create_crypto_ticker(session):
                 
                 ticker_items.append(item)
         except Exception as e:
+            # Continue if a symbol fails to load
             continue
     
     # Render ticker only if we have items
