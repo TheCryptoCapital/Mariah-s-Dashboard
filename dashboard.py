@@ -591,18 +591,10 @@ def set_dashboard_background(image_file):
             border-radius: 16px;
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.05);
             padding: 1rem;
-            position: fixed !important;
-            top: 1rem !important;
-            left: 0.5rem !important;
-            bottom: 60px !important;  /* LEAVE SPACE FOR BOTTOM BAR */
-            height: auto !important;
-            max-height: calc(100vh - 8rem) !important;
+            margin: 1.5rem 0 1.5rem 0.5rem;
+            transition: all 0.3s ease-in-out;
             width: 360px !important;
             min-width: 360px !important;
-            z-index: 998 !important;
-            overflow-y: auto;
-            overflow-x: hidden;
-    
         }}
         [data-testid="stSidebar"]:hover {{
             box-shadow: 0 0 35px rgba(0, 255, 255, 0.2);
