@@ -547,24 +547,29 @@ class MariahLevel2:
 # UTILITY FUNCTIONS
 # =======================
 def create_crypto_ticker(session):
-    """Create a simple crypto ticker using your existing session"""
+    """Create a crypto ticker at the very top of the page, above Streamlit header"""
     
     # Add CSS for the ticker
     st.markdown("""
     <style>
     .crypto-ticker {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
         background: linear-gradient(90deg, rgba(15,15,35,0.95) 0%, rgba(30,20,60,0.95) 100%);
         border-bottom: 1px solid #00fff5;
-        padding: 10px 0;
+        padding: 8px 0;
         overflow: hidden;
         white-space: nowrap;
-        position: relative;
-        z-index: 999;
+        z-index: 9999999;  /* Very high z-index to appear above everything */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
     
     .ticker-scroll {
         display: inline-block;
-        animation: scroll 120s linear infinite;  /* Increased to 120s for more symbols */
+        animation: scroll 120s linear infinite;
     }
     
     @keyframes scroll {
@@ -584,6 +589,21 @@ def create_crypto_ticker(session):
     
     .positive { color: #00d87f; }
     .negative { color: #ff4d4d; }
+    
+    /* Push Streamlit header down to make room for ticker */
+    header[data-testid="stHeader"] {
+        top: 40px !important;  /* Adjust this value if needed */
+    }
+    
+    /* Push main content down */
+    .main .block-container {
+        padding-top: 80px !important;  /* Adjust this value if needed */
+    }
+    
+    /* Push sidebar down if needed */
+    [data-testid="stSidebar"] {
+        top: 40px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -621,7 +641,6 @@ def create_crypto_ticker(session):
                 
                 ticker_items.append(item)
         except Exception as e:
-            # Continue if a symbol fails to load
             continue
     
     # Render ticker only if we have items
