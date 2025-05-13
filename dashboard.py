@@ -3268,19 +3268,14 @@ def main():
     st.markdown("""
     <style>
     .futuristic-panel {
-        background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(0, 255, 245, 0.4);
-        border-radius: 0;
-        clip-path: polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px);
+        background: linear-gradient(135deg, #00fff5 0%, #00d87f 100%);
+        border: 2px solid #00fff5;
+        border-radius: 12px;
         padding: 18px;
         position: relative;
         overflow: hidden;
         transition: all 0.3s ease;
-        box-shadow: 
-            0 0 30px rgba(0, 255, 245, 0.2),
-            inset 0 1px 0 rgba(0, 255, 245, 0.1);
+        box-shadow: 0 0 25px rgba(0, 255, 245, 0.3);
     }
 
     .futuristic-panel::before {
@@ -3290,77 +3285,35 @@ def main():
         left: 0;
         right: 0;
         height: 2px;
-        background: linear-gradient(90deg, transparent, #00fff5, transparent);
-        animation: scan-line 2s ease-in-out infinite;
-    }
-
-    .futuristic-panel::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(180deg, transparent, #00fff5, transparent);
-        animation: scan-line-vertical 3s ease-in-out infinite;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        animation: scan-line 3s ease-in-out infinite;
     }
 
     @keyframes scan-line {
         0%, 100% { opacity: 0.3; transform: translateX(-100%); }
-        50% { opacity: 1; transform: translateX(100%); }
-    }
-
-    @keyframes scan-line-vertical {
-        0%, 100% { opacity: 0.3; transform: translateY(-100%); }
-        50% { opacity: 1; transform: translateY(100%); }
+        50% { opacity: 1; transform: translateX(0%); }
     }
 
     .futuristic-panel:hover {
-        border-color: rgba(0, 255, 245, 0.8);
-        transform: translateY(-5px);
-        box-shadow: 
-            0 10px 40px rgba(0, 255, 245, 0.4),
-            inset 0 1px 0 rgba(0, 255, 245, 0.2);
+        border-color: #ffffff;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 35px rgba(0, 255, 245, 0.5);
     }
 
     .panel-header {
-        color: #00fff5;
-        font-size: 0.85rem;
+        color: #000;
+        font-size: 0.9rem;
         font-weight: 600;
         margin: 0;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        text-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+        letter-spacing: 0.5px;
     }
 
     .panel-value {
         font-size: 1.8rem;
         font-weight: 700;
         margin: 8px 0 0 0;
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        font-family: 'Courier New', monospace;
-    }
-
-    /* Corner decorations */
-    .futuristic-panel .corner-decoration {
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        border: 2px solid #00fff5;
-    }
-
-    .corner-decoration.top-left {
-        top: 4px;
-        left: 4px;
-        border-bottom: none;
-        border-right: none;
-    }
-
-    .corner-decoration.bottom-right {
-        bottom: 4px;
-        right: 4px;
-        border-top: none;
-        border-left: none;
+        font-family: 'Arial', sans-serif;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -3371,11 +3324,9 @@ def main():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        pnl_color = "#00d87f" if total_pnl >= 0 else "#ff4d4d"
+        pnl_color = "#000" if total_pnl >= 0 else "#ff4d4d"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
-            <div class="corner-decoration top-left"></div>
-            <div class="corner-decoration bottom-right"></div>
             <h4 class="panel-header">💰 Total PnL</h4>
             <h2 class="panel-value" style="color: {pnl_color};">${total_pnl:,.2f}</h2>
         </div>
@@ -3384,48 +3335,40 @@ def main():
     with col2:
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
-            <div class="corner-decoration top-left"></div>
-            <div class="corner-decoration bottom-right"></div>
             <h4 class="panel-header">⚙️ Trading Mode</h4>
-            <h2 class="panel-value" style="color: #00fff5;">{mode}</h2>
+            <h2 class="panel-value" style="color: {mode_colors[mode]};">{mode}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
-            <div class="corner-decoration top-left"></div>
-            <div class="corner-decoration bottom-right"></div>
             <h4 class="panel-header">📈 Open Positions</h4>
-            <h2 class="panel-value" style="color: white;">{total_positions}</h2>
+            <h2 class="panel-value" style="color: #000;">{total_positions}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col4:
-        risk_color = "#ff4d4d" if risk_locked else "#00d87f"
+        risk_color = "#ff4d4d" if risk_locked else "#000"
         risk_status = "LOCKED" if risk_locked else "OK"
         risk_icon = "🚫" if risk_locked else "✅"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
-            <div class="corner-decoration top-left"></div>
-            <div class="corner-decoration bottom-right"></div>
             <h4 class="panel-header">🛡️ Risk Status</h4>
             <h2 class="panel-value" style="color: {risk_color};">{risk_icon} {risk_status}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col5:
-        scanner_color = "#00fff5" if scanner_active else "#666"
+        scanner_color = "#000" if scanner_active else "#666"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
-            <div class="corner-decoration top-left"></div>
-            <div class="corner-decoration bottom-right"></div>
             <h4 class="panel-header">📡 Scanner</h4>
             <h2 class="panel-value" style="color: {scanner_color};">{'🟢 ON' if scanner_active else '🔴 OFF'}</h2>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)    
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
