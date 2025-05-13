@@ -63,56 +63,59 @@ CSV_FILE = "trades.csv"
 DAILY_PNL_FILE = "daily_pnl.csv"
 DAILY_PNL_SPLIT_FILE = "daily_pnl_split.csv"
 
-# =======================
-# SETUP & CONFIGURATION
-# =======================
-# Load environment variables
-load_dotenv()
+def main():
+    # =======================
+    # SETUP & CONFIGURATION
+    # =======================
+    # Load environment variables
+    load_dotenv()
 
-# Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+    # Set OpenAI API key
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Set page layout
-st.set_page_config(page_title="The Crypto Capital", layout="wide")
+    # Set page layout
+    st.set_page_config(page_title="The Crypto Capital", layout="wide")
 
-# Initialize session state for tracking UI state
-if "mariah_greeted" not in st.session_state:
-    st.session_state["mariah_greeted"] = False
+    # Initialize session state for tracking UI state
+    if "mariah_greeted" not in st.session_state:
+        st.session_state["mariah_greeted"] = False
 
-if "override_risk_lock" not in st.session_state:
-    st.session_state["override_risk_lock"] = False
+    if "override_risk_lock" not in st.session_state:
+        st.session_state["override_risk_lock"] = False
 
-if "test_mode" not in st.session_state:
-    st.session_state["test_mode"] = False
+    if "test_mode" not in st.session_state:
+        st.session_state["test_mode"] = False
 
-if "mute_mariah" not in st.session_state:
-    st.session_state["mute_mariah"] = False
+    if "mute_mariah" not in st.session_state:
+        st.session_state["mute_mariah"] = False
 
-if "current_tool" not in st.session_state:
-    st.session_state.current_tool = None
+    if "current_tool" not in st.session_state:
+        st.session_state.current_tool = None
 
-if "active_tab_index" not in st.session_state:
-    st.session_state.active_tab_index = 0
+    if "active_tab_index" not in st.session_state:
+        st.session_state.active_tab_index = 0
 
-# Initialize Bybit API connection
-API_KEY = os.getenv("API_KEY")
-API_SECRET = os.getenv("API_SECRET")
-session = HTTP(
-    api_key=API_KEY,
-    api_secret=API_SECRET,
-    recv_window=30000  # Increase timeout window (ms)
-)
+    # Initialize Bybit API connection
+    API_KEY = os.getenv("API_KEY")
+    API_SECRET = os.getenv("API_SECRET")
+    session = HTTP(
+        api_key=API_KEY,
+        api_secret=API_SECRET,
+        recv_window=30000  # Increase timeout window (ms)
+    )
 
-# =======================
-# ML SIGNAL GENERATOR
-# =======================
-class MLSignalGenerator:
-    def __init__(self, model_path="models/rf_predictor.pkl"):
-        """Initialize the ML signal generator."""
-        self.model_path = model_path
-        self.model = self._load_model()
-        self.scaler = StandardScaler()
-        self.logger = logging.getLogger(__name__)
+    # =======================
+    # ML SIGNAL GENERATOR
+    # =======================
+    class MLSignalGenerator:
+        def __init__(self, model_path="models/rf_predictor.pkl"):
+            """Initialize the ML signal generator."""
+            self.model_path = model_path
+            # your model loading code here...
+            self.model_path = model_path
+            self.model = self._load_model()
+            self.scaler = StandardScaler()
+            self.logger = logging.getLogger(__name__)
         
     def _load_model(self):
         """Load the trained model if exists, otherwise return None."""
