@@ -2276,7 +2276,6 @@ def render_filter_by_date():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 def render_crypto_news():
     """Render the Crypto News tab."""
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -2523,7 +2522,6 @@ def render_onchain_data():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-
 def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
     """Enhanced Multi-Signal Scanner with weighted consensus logic"""
     with st.container():
@@ -2649,24 +2647,28 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                         else:
                             macd_bullish = False
                         
+                        # Format RSI value safely to avoid f-string errors
+                        rsi_display = f"{rsi_value:.1f}" if rsi_value is not None else "N/A"
+                        macd_display = "+" if macd_bullish else "-"
+                        
                         # Combine RSI and MACD
                         if rsi_trigger and macd_bullish:
                             scanner_results['rsi_macd'] = {
                                 'signal': 'buy',
                                 'confidence': 0.85,
-                                'reason': f'RSI oversold ({rsi_value:.1f}) + MACD bullish crossover'
+                                'reason': f'RSI oversold ({rsi_display}) + MACD bullish crossover'
                             }
-                        elif rsi_value and rsi_value > 70 and not macd_bullish:
+                        elif rsi_value is not None and rsi_value > 70 and not macd_bullish:
                             scanner_results['rsi_macd'] = {
                                 'signal': 'sell',
                                 'confidence': 0.75,
-                                'reason': f'RSI overbought ({rsi_value:.1f}) + MACD bearish'
+                                'reason': f'RSI overbought ({rsi_display}) + MACD bearish'
                             }
                         else:
                             scanner_results['rsi_macd'] = {
                                 'signal': 'hold',
                                 'confidence': 0.5,
-                                'reason': f'RSI: {rsi_value:.1f if rsi_value else "N/A"}, MACD: {"+" if macd_bullish else "-"}'
+                                'reason': f'RSI: {rsi_display}, MACD: {macd_display}'
                             }
                     
                     # 2. ML Signal Scanner
@@ -2843,8 +2845,6 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
             "🚨 Manually override Mariah's risk lock (not recommended)",
             value=st.session_state.get("override_risk_lock", False)
         )
-
-
 # =======================
 # MAIN FUNCTION
 # =======================
