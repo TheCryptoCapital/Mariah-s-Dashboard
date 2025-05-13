@@ -2938,9 +2938,6 @@ def main():
     # Set OpenAI API key
     openai.api_key = os.getenv("OPENAI_API_KEY")
     
-    # Set page layout (MUST BE FIRST!)
-    st.set_page_config(page_title="The Crypto Capital", layout="wide")
-    
     # ADD THIS LINE HERE - RIGHT AFTER page config
     create_crypto_ticker(session)
     
