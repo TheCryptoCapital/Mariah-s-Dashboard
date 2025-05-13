@@ -1,4 +1,4 @@
-# Updated on May 12, pushing correct VS Code version
+Dashboard Backup
 
 """
 Crypto Capital Dashboard - ENHANCED VERSION with Visual Improvements
@@ -2689,10 +2689,181 @@ def render_onchain_data():
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
-    """Enhanced Multi-Signal Scanner with weighted consensus logic"""
+    """Enhanced Multi-Signal Scanner with subtle sci-fi effects"""
+    
+    # Scanner section with minimal spinning
+    st.markdown("""
+    <style>
+    .scanner-glass-panel {
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.08) 0%, rgba(0, 255, 245, 0.02) 100%);
+        border: 1px solid rgba(0, 255, 245, 0.4);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 
+            0 0 20px rgba(0, 255, 245, 0.1),
+            inset 0 1px 0 rgba(0, 255, 245, 0.1);
+        position: relative;
+        overflow: hidden;
+        animation: panel-pulse 4s ease-in-out infinite;
+    }
+    
+    .scanner-glass-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 245, 0.8), transparent);
+        animation: scan-line 3s ease-in-out infinite;
+    }
+    
+    @keyframes panel-pulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 245, 0.1); }
+        50% { box-shadow: 0 0 30px rgba(0, 255, 245, 0.15); }
+    }
+    
+    @keyframes scan-line {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+    }
+    
+    /* Single main spinner - only on title */
+    .scanner-title {
+        color: #00fff5;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        text-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .main-spinner {
+        width: 40px;
+        height: 40px;
+        border: 2px solid transparent;
+        border-top: 2px solid #00fff5;
+        border-right: 2px solid rgba(0, 255, 245, 0.3);
+        border-radius: 50%;
+        animation: spin 3s linear infinite;
+        position: relative;
+    }
+    
+    .main-spinner::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 6px;
+        height: 6px;
+        background: #00fff5;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px #00fff5;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .scanner-subsection {
+        background: rgba(0, 255, 245, 0.03);
+        border: 1px solid rgba(0, 255, 245, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        transition: all 0.3s ease;
+    }
+    
+    .scanner-subsection:hover {
+        background: rgba(0, 255, 245, 0.05);
+        border-color: rgba(0, 255, 245, 0.3);
+    }
+    
+    .consensus-panel {
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.1) 0%, rgba(0, 255, 245, 0.05) 100%);
+        border: 2px solid rgba(0, 255, 245, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 0 30px rgba(0, 255, 245, 0.15);
+        animation: consensus-glow 5s ease-in-out infinite;
+    }
+    
+    @keyframes consensus-glow {
+        0%, 100% { border-color: rgba(0, 255, 245, 0.3); }
+        50% { border-color: rgba(0, 255, 245, 0.5); }
+    }
+    
+    .result-metric {
+        text-align: center;
+        background: rgba(0, 255, 245, 0.05);
+        border: 1px solid rgba(0, 255, 245, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .result-metric:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 255, 245, 0.2);
+    }
+    
+    .signal-indicator {
+        background: rgba(0, 255, 245, 0.08);
+        border-left: 3px solid #00fff5;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 0 8px 8px 0;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .signal-indicator:hover {
+        background: rgba(0, 255, 245, 0.12);
+        transform: translateX(5px);
+    }
+    
+    /* Subtle indicator dot */
+    .signal-indicator::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 8px;
+        height: 8px;
+        background: rgba(0, 255, 245, 0.6);
+        border-radius: 50%;
+        animation: pulse-dot 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
+    h3 {
+        color: #00fff5 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     with st.container():
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.subheader("📡 Multi-Signal Scanner System")
+        # Main scanner container
+        st.markdown('<div class="scanner-glass-panel">', unsafe_allow_html=True)
+        
+        # Title with single main spinner
+        st.markdown('''
+        <div class="scanner-title">
+            📡 Multi-Signal Scanner System
+            <div class="main-spinner"></div>
+        </div>
+        ''', unsafe_allow_html=True)
         
         # Initialize Mariah Level 2
         if "mariah_level2" not in st.session_state:
@@ -2701,7 +2872,8 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
         mariah2 = st.session_state.mariah_level2
         
         # Signal Scanner Selection
-        st.markdown("### 🔍 Available Signal Scanners")
+        st.markdown('<div class="scanner-subsection">', unsafe_allow_html=True)
+        st.markdown('<h3>🔍 Available Signal Scanners</h3>', unsafe_allow_html=True)
         
         # Create columns for scanner selection
         scanner_cols = st.columns(3)
@@ -2717,9 +2889,11 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
         with scanner_cols[2]:
             use_enhanced = st.checkbox("🔧 Enhanced Multi-Indicator", value=True, help="Advanced technical analysis combination")
         
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Consensus Logic Settings
-        st.markdown("---")
-        st.markdown("### ⚖️ Consensus Logic Settings")
+        st.markdown('<div class="scanner-subsection">', unsafe_allow_html=True)
+        st.markdown('<h3>⚖️ Consensus Logic Settings</h3>', unsafe_allow_html=True)
         
         logic_cols = st.columns(3)
         
@@ -2735,8 +2909,11 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
             high_vol_weight_ml = st.slider("ML Weight (High Vol)", min_value=1.0, max_value=3.0, value=1.5, step=0.1)
             high_vol_weight_onchain = st.slider("On-Chain Weight (High Vol)", min_value=1.0, max_value=3.0, value=1.3, step=0.1)
         
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Scanner Weights Configuration
-        st.markdown("### 🏋️ Scanner Weights Configuration")
+        st.markdown('<div class="scanner-subsection">', unsafe_allow_html=True)
+        st.markdown('<h3>🏋️ Scanner Weights Configuration</h3>', unsafe_allow_html=True)
         weight_cols = st.columns(5)
         
         weights = {}
@@ -2751,9 +2928,11 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
         with weight_cols[4]:
             weights['enhanced'] = st.number_input("Enhanced Weight", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
         
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Trading Parameters
-        st.markdown("---")
-        st.markdown("### 📈 Trading Parameters")
+        st.markdown('<div class="scanner-subsection">', unsafe_allow_html=True)
+        st.markdown('<h3>📈 Trading Parameters</h3>', unsafe_allow_html=True)
         
         param_cols = st.columns(2)
         with param_cols[0]:
@@ -2763,17 +2942,21 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                                    ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"], 
                                    default=["BTCUSDT", "ETHUSDT"])
         
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         # Get risk percent from sidebar or default
         risk_percent = st.session_state.get("risk_percent", 2.0)
-        
-        st.markdown("---")
         
         # Enhanced Analysis for each symbol
         for symbol in symbols:
             with st.expander(f"📈 {symbol} Multi-Signal Analysis", expanded=True):
+                # Apply the consensus panel styling to expander content
+                st.markdown('<div class="consensus-panel">', unsafe_allow_html=True)
+                
                 # Daily loss guard
                 if check_max_daily_loss(df_bot_closed, df_manual_closed):
                     st.warning(f"🛑 Mariah skipped {symbol} — Daily loss limit reached.")
+                    st.markdown('</div>', unsafe_allow_html=True)
                     continue
                 
                 try:
@@ -2930,18 +3113,24 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                         weight = current_weights.get(scanner_name, 1.0)
                         weighted_contribution = result['confidence'] * weight
                         
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.write(f"**{scanner_name.replace('_', ' ').title()}**")
-                        with col2:
-                            st.write(f"{signal_emoji} {result['signal'].upper()}")
-                        with col3:
-                            st.write(f"Confidence: {result['confidence']:.1%}")
-                        with col4:
-                            st.write(f"Weighted: {weighted_contribution:.2f}")
-                        
-                        st.caption(f"💡 {result['reason']}")
-                        st.markdown("---")
+                        # Apply signal indicator styling
+                        st.markdown(f'''
+                        <div class="signal-indicator">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="color: #00fff5;">{scanner_name.replace('_', ' ').title()}</strong>
+                                    <span style="margin-left: 10px; color: {{"buy": "#00d87f", "sell": "#ff4d4d", "hold": "#888888"}[result["signal"]]};">{signal_emoji} {result["signal"].upper()}</span>
+                                </div>
+                                <div>
+                                    <span style="color: white;">Confidence: {result["confidence"]:.1%}</span>
+                                    <span style="margin-left: 15px; color: white;">Weighted: {weighted_contribution:.2f}</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 5px; color: #ccc; font-size: 0.9rem;">
+                                💡 {result["reason"]}
+                            </div>
+                        </div>
+                        ''', unsafe_allow_html=True)
                     
                     # Execute Trade Button
                     if consensus_result['final_signal'] != 'hold' and consensus_result['aligned_count'] >= min_consensus:
@@ -3004,16 +3193,19 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                     st.error(f"❌ Error in multi-signal analysis for {symbol}: {e}")
                     import traceback
                     st.code(traceback.format_exc())
+                
+                st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Risk Controls
-        st.markdown("---")
+        st.markdown('<div class="scanner-subsection">', unsafe_allow_html=True)
         st.markdown("### 🛑 Risk Controls")
         st.session_state["override_risk_lock"] = st.checkbox(
             "🚨 Manually override Mariah's risk lock (not recommended)",
             value=st.session_state.get("override_risk_lock", False)
         )
+        st.markdown('</div>', unsafe_allow_html=True)
 # =======================
 # MAIN FUNCTION
 # =======================
