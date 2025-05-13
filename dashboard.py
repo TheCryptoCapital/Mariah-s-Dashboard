@@ -3275,16 +3275,16 @@ def main():
         st.markdown(f"""
         <div style="
             text-align: center; 
-            background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 245, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
             border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
             transition: all 0.3s ease;
         ">
-            <h4 style="margin: 0; color: #00fff5; font-size: 0.9rem; opacity: 0.8;">💰 Total PnL</h4>
+            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">💰 Total PnL</h4>
             <h2 style="margin: 8px 0 0 0; color: {pnl_color}; font-weight: 700;">${total_pnl:,.2f}</h2>
         </div>
         """, unsafe_allow_html=True)
@@ -3293,16 +3293,16 @@ def main():
         st.markdown(f"""
         <div style="
             text-align: center; 
-            background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 245, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
             border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
             transition: all 0.3s ease;
         ">
-            <h4 style="margin: 0; color: #00fff5; font-size: 0.9rem; opacity: 0.8;">⚙️ Trading Mode</h4>
+            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">⚙️ Trading Mode</h4>
             <h2 style="margin: 8px 0 0 0; color: {mode_colors[mode]}; font-weight: 700;">{mode}</h2>
         </div>
         """, unsafe_allow_html=True)
@@ -3311,16 +3311,16 @@ def main():
         st.markdown(f"""
         <div style="
             text-align: center; 
-            background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 245, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
             border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
             transition: all 0.3s ease;
         ">
-            <h4 style="margin: 0; color: #00fff5; font-size: 0.9rem; opacity: 0.8;">📈 Open Positions</h4>
+            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">📈 Open Positions</h4>
             <h2 style="margin: 8px 0 0 0; color: white; font-weight: 700;">{total_positions}</h2>
         </div>
         """, unsafe_allow_html=True)
@@ -3332,41 +3332,41 @@ def main():
         st.markdown(f"""
         <div style="
             text-align: center; 
-            background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 245, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
             border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
             transition: all 0.3s ease;
         ">
-            <h4 style="margin: 0; color: #00fff5; font-size: 0.9rem; opacity: 0.8;">🛡️ Risk Status</h4>
+            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">🛡️ Risk Status</h4>
             <h2 style="margin: 8px 0 0 0; color: {risk_color}; font-weight: 700;">{risk_icon} {risk_status}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col5:
-        scanner_color = "#00fff5" if scanner_active else "#888888"
+        scanner_color = "#ff69b4" if scanner_active else "#888888"
         st.markdown(f"""
         <div style="
             text-align: center; 
-            background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 245, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
             border-radius: 12px;
             padding: 18px;
-            box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
             transition: all 0.3s ease;
         ">
-            <h4 style="margin: 0; color: #00fff5; font-size: 0.9rem; opacity: 0.8;">📡 Scanner</h4>
+            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">📡 Scanner</h4>
             <h2 style="margin: 8px 0 0 0; color: {scanner_color}; font-weight: 700;">{'🟢 ON' if scanner_active else '🔴 OFF'}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-    
+
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
         mariah_speak("Warning. Mariah is pausing trades due to risk limit.")
