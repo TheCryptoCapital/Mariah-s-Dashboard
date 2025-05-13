@@ -3270,50 +3270,120 @@ def main():
     .futuristic-panel {
         background: linear-gradient(135deg, #00fff5 0%, #00d87f 100%);
         border: 2px solid #00fff5;
-        border-radius: 12px;
+        clip-path: polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px);
         padding: 18px;
         position: relative;
         overflow: hidden;
         transition: all 0.3s ease;
-        box-shadow: 0 0 25px rgba(0, 255, 245, 0.3);
+        box-shadow: 
+            0 0 30px rgba(0, 255, 245, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
+    /* Horizontal scan line */
     .futuristic-panel::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
-        right: 0;
+        left: -100%;
+        width: 100%;
         height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-        animation: scan-line 3s ease-in-out infinite;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+        animation: scan-horizontal 2.5s linear infinite;
     }
 
-    @keyframes scan-line {
-        0%, 100% { opacity: 0.3; transform: translateX(-100%); }
-        50% { opacity: 1; transform: translateX(0%); }
+    /* Vertical scan line */
+    .futuristic-panel::after {
+        content: '';
+        position: absolute;
+        top: -100%;
+        right: 0;
+        width: 2px;
+        height: 100%;
+        background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+        animation: scan-vertical 3s linear infinite;
+    }
+
+    @keyframes scan-horizontal {
+        0% { left: -100%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { left: 100%; opacity: 0; }
+    }
+
+    @keyframes scan-vertical {
+        0% { top: -100%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
     }
 
     .futuristic-panel:hover {
         border-color: #ffffff;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 35px rgba(0, 255, 245, 0.5);
+        transform: translateY(-5px);
+        box-shadow: 
+            0 10px 40px rgba(0, 255, 245, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .panel-header {
         color: #000;
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 0.85rem;
+        font-weight: 700;
         margin: 0;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.5px;
+        font-family: 'Courier New', monospace;
     }
 
     .panel-value {
         font-size: 1.8rem;
         font-weight: 700;
         margin: 8px 0 0 0;
-        font-family: 'Arial', sans-serif;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Corner brackets */
+    .corner-bracket {
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        border: 3px solid #ffffff;
+    }
+
+    .corner-bracket.top-left {
+        top: 8px;
+        left: 8px;
+        border-bottom: none;
+        border-right: none;
+    }
+
+    .corner-bracket.top-right {
+        top: 8px;
+        right: 8px;
+        border-bottom: none;
+        border-left: none;
+    }
+
+    .corner-bracket.bottom-left {
+        bottom: 8px;
+        left: 8px;
+        border-top: none;
+        border-right: none;
+    }
+
+    .corner-bracket.bottom-right {
+        bottom: 8px;
+        right: 8px;
+        border-top: none;
+        border-left: none;
+    }
+
+    /* Enhanced hover effect for corner brackets */
+    .futuristic-panel:hover .corner-bracket {
+        border-color: #ffffff;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
     }
     </style>
     """, unsafe_allow_html=True)
@@ -3327,6 +3397,10 @@ def main():
         pnl_color = "#000" if total_pnl >= 0 else "#ff4d4d"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">💰 Total PnL</h4>
             <h2 class="panel-value" style="color: {pnl_color};">${total_pnl:,.2f}</h2>
         </div>
@@ -3335,6 +3409,10 @@ def main():
     with col2:
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">⚙️ Trading Mode</h4>
             <h2 class="panel-value" style="color: {mode_colors[mode]};">{mode}</h2>
         </div>
@@ -3343,6 +3421,10 @@ def main():
     with col3:
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">📈 Open Positions</h4>
             <h2 class="panel-value" style="color: #000;">{total_positions}</h2>
         </div>
@@ -3354,6 +3436,10 @@ def main():
         risk_icon = "🚫" if risk_locked else "✅"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">🛡️ Risk Status</h4>
             <h2 class="panel-value" style="color: {risk_color};">{risk_icon} {risk_status}</h2>
         </div>
@@ -3363,12 +3449,16 @@ def main():
         scanner_color = "#000" if scanner_active else "#666"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-bracket top-left"></div>
+            <div class="corner-bracket top-right"></div>
+            <div class="corner-bracket bottom-left"></div>
+            <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">📡 Scanner</h4>
             <h2 class="panel-value" style="color: {scanner_color};">{'🟢 ON' if scanner_active else '🔴 OFF'}</h2>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)    
+    st.markdown('</div>', unsafe_allow_html=True)  
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
