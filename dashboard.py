@@ -547,12 +547,16 @@ class MariahLevel2:
 # UTILITY FUNCTIONS
 # =======================
 def create_crypto_ticker(session):
-    """Create a crypto ticker at the very top of the page, above Streamlit header"""
+    """Create a seamless crypto ticker with no gaps"""
     
-    # Add CSS for the ticker
-    st.markdown("""
+    # Initialize toggle state
+    if 'hide_header' not in st.session_state:
+        st.session_state.hide_header = False
+    
+    # Add CSS for seamless scrolling
+    st.markdown(f"""
     <style>
-    .crypto-ticker {
+    .crypto-ticker {{
         position: fixed;
         top: 0;
         left: 0;
@@ -563,21 +567,30 @@ def create_crypto_ticker(session):
         padding: 8px 0;
         overflow: hidden;
         white-space: nowrap;
-        z-index: 9999999;  /* Very high z-index to appear above everything */
+        z-index: 9999999;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
+    }}
     
-    .ticker-scroll {
-        display: inline-block;
-        animation: scroll 120s linear infinite;
-    }
+    .ticker-scroll {{
+        display: flex;
+        align-items: center;
+        animation: scrollContinuous 60s linear infinite;
+        /* Duplicate content for seamless loop */
+        width: max-content;
+    }}
     
-    @keyframes scroll {
-        0% { transform: translateX(100%); }
-        100% { transform: translateX(-100%); }
-    }
+    .ticker-content {{
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+    }}
     
-    .crypto-item {
+    @keyframes scrollContinuous {{
+        0% {{ transform: translateX(0); }}
+        100% {{ transform: translateX(-50%); }}
+    }}
+    
+    .crypto-item {{
         display: inline-block;
         margin: 0 20px;
         padding: 5px 15px;
@@ -585,25 +598,60 @@ def create_crypto_ticker(session):
         border-radius: 5px;
         font-size: 14px;
         color: white;
-    }
+        white-space: nowrap;
+    }}
     
-    .positive { color: #00d87f; }
-    .negative { color: #ff4d4d; }
+    .positive {{ color: #00d87f; }}
+    .negative {{ color: #ff4d4d; }}
     
-    /* Push Streamlit header down to make room for ticker */
-    header[data-testid="stHeader"] {
-        top: 40px !important;  /* Adjust this value if needed */
-    }
-    
-    /* Push main content down */
-    .main .block-container {
-        padding-top: 80px !important;  /* Adjust this value if needed */
-    }
-    
-    /* Push sidebar down if needed */
-    [data-testid="stSidebar"] {
+    /* Streamlit header styling */
+    header[data-testid="stHeader"] {{
+        {'display: none !important;' if st.session_state.hide_header else 'display: block !important;'}
         top: 40px !important;
-    }
+        background: rgba(20, 16, 50, 0.95) !important;
+        border-bottom: 3px solid #00fff5 !important;
+        box-shadow: 0 0 20px #00fff5, 0 2px 10px rgba(0, 255, 245, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+    }}
+    
+    /* Enhanced green glow effect */
+    header[data-testid="stHeader"]::after {{
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #00fff5, transparent);
+        animation: glow 2s ease-in-out infinite alternate;
+    }}
+    
+    @keyframes glow {{
+        0% {{ box-shadow: 0 0 10px #00fff5; }}
+        100% {{ box-shadow: 0 0 30px #00fff5, 0 0 40px #00fff5; }}
+    }}
+    
+    /* Header button styling */
+    [data-testid="stHeader"] button {{
+        color: white !important;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }}
+    
+    [data-testid="stHeader"] button:hover {{
+        opacity: 1;
+        filter: drop-shadow(0 0 10px #00fff5);
+    }}
+    
+    /* Main content positioning */
+    .main .block-container {{
+        padding-top: {80 if not st.session_state.hide_header else 40}px !important;
+    }}
+    
+    /* Sidebar positioning */
+    [data-testid="stSidebar"] {{
+        top: {40 if not st.session_state.hide_header else 0}px !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
     
@@ -645,13 +693,18 @@ def create_crypto_ticker(session):
     
     # Render ticker only if we have items
     if ticker_items:
-        # Join all items into a single string
+        # Create seamless content by duplicating items
         all_items = ''.join(ticker_items)
         
         ticker_html = f"""
         <div class="crypto-ticker">
             <div class="ticker-scroll">
-                {all_items}
+                <div class="ticker-content">
+                    {all_items}
+                </div>
+                <div class="ticker-content">
+                    {all_items}
+                </div>
             </div>
         </div>
         """
