@@ -602,64 +602,35 @@ def create_crypto_ticker(session):
                 color_class = "positive" if change_pct >= 0 else "negative"
                 sign = "+" if change_pct >= 0 else ""
                 
-                # Fixed HTML formatting - no f-string, direct concatenation
-                item = (
-                    '<span class="crypto-item">'
-                    '<strong>' + symbol.replace('USDT', '') + '</strong> '
-                    '$' + f"{price:,.2f}" + ' '
-                    '<span class="' + color_class + '">' + sign + f"{change_pct:.2f}" + '%</span>'
-                    '</span>'
-                )
+                # Create clean HTML string
+                symbol_name = symbol.replace('USDT', '')
+                price_formatted = f"{price:,.2f}"
+                change_formatted = f"{sign}{change_pct:.2f}"
+                
+                item = f"""<span class="crypto-item">
+                    <strong>{symbol_name}</strong> 
+                    ${price_formatted} 
+                    <span class="{color_class}">{change_formatted}%</span>
+                </span>"""
+                
                 ticker_items.append(item)
         except Exception as e:
             continue
     
-    # Render ticker
+    # Render ticker only if we have items
     if ticker_items:
-        ticker_html = (
-            '<div class="crypto-ticker">'
-            '<div class="ticker-scroll">'
-            + ''.join(ticker_items) +
-            '</div>'
-            '</div>'
-        )
-        st.markdown(ticker_html, unsafe_allow_html=True)
-    
-    # Get crypto data
-    crypto_symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"]
-    ticker_items = []
-    
-    for symbol in crypto_symbols:
-        try:
-            response = session.get_tickers(category="linear", symbol=symbol)
-            if response.get("retCode") == 0:
-                data = response["result"]["list"][0]
-                price = float(data["lastPrice"])
-                change_pct = float(data["price24hPcnt"]) * 100
-                
-                color_class = "positive" if change_pct >= 0 else "negative"
-                sign = "+" if change_pct >= 0 else ""
-                
-                item = f"""
-                <span class="crypto-item">
-                    <strong>{symbol.replace('USDT', '')}</strong> 
-                    ${price:,.2f} 
-                    <span class="{color_class}">{sign}{change_pct:.2f}%</span>
-                </span>
-                """
-                ticker_items.append(item)
-        except Exception as e:
-            continue
-    
-    # Render ticker
-    if ticker_items:
+        # Join all items into a single string
+        all_items = ''.join(ticker_items)
+        
         ticker_html = f"""
         <div class="crypto-ticker">
             <div class="ticker-scroll">
-                {''.join(ticker_items)}
+                {all_items}
             </div>
         </div>
         """
+        
+        # Render the complete ticker
         st.markdown(ticker_html, unsafe_allow_html=True)
 
 def get_base64_image(path):
