@@ -3690,4 +3690,4 @@ def main():
             qty_calc = 0
             st.info("Enter valid entry and stop-loss.")
         
-        st.markdown('</div>', unsafe_allow_html=True
+       st.markdown('</div>', unsafe_allow_html=True)
