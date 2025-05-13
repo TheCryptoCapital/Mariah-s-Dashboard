@@ -3904,25 +3904,22 @@ def main():
     # =======================
     st.markdown(f"""
     <div style="position: fixed; bottom: 0; left: 0; right: 0; 
-            background-color: rgba(15, 15, 35, 0.95); 
-            padding: 8px; border-top: 1px solid #00fff5;
-            backdrop-filter: blur(10px);
-            z-index: 998;  /* Changed from 999 to 998 */
-            height: 40px;">  <!-- Add explicit height -->
-    <!-- Your status bar content -->
-</div>
+                background-color: rgba(15, 15, 35, 0.95); 
+                padding: 8px; border-top: 1px solid #00fff5;
+                backdrop-filter: blur(10px);
+                z-index: 999;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #ccc;">
+            <div>🔄 Last Update: {current_time.strftime("%H:%M:%S")}</div>
+            <div>📊 Active Trades: {total_positions}</div>
+            <div>💰 P&L: <span style="color: {'#00d87f' if total_pnl >= 0 else '#ff4d4d'};">${total_pnl:,.2f}</span></div>
+            <div>🛡️ Risk: {"LOCKED" if risk_locked else "OK"}</div>
+            <div>⚙️ {mode}</div>
+            <div>📡 Scanner: {'🟢' if scanner_active else '🔴'}</div>
+        </div>
+    </div>
+    <div style="height: 40px;"></div>
+    """, unsafe_allow_html=True)
 
-<!-- Add this to ensure content doesn't get hidden -->
-<div style="height: 40px;"></div>
-
-<style>
-/* Ensure sidebar is positioned above status bar */
-[data-testid="stSidebar"] {
-    z-index: 999 !important;  /* Higher than status bar */
-    bottom: 50px !important;  /* Leave space for status bar */
-}
-</style>
-""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
