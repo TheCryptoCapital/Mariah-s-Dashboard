@@ -3903,23 +3903,37 @@ def main():
     # BOTTOM STATUS BAR
     # =======================
     st.markdown(f"""
-    <div style="position: fixed; bottom: 0; left: 0; right: 0; 
-                background-color: rgba(15, 15, 35, 0.95); 
-                padding: 8px; border-top: 1px solid #00fff5;
-                backdrop-filter: blur(10px);
-                z-index: 999;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #ccc;">
-            <div>🔄 Last Update: {current_time.strftime("%H:%M:%S")}</div>
-            <div>📊 Active Trades: {total_positions}</div>
-            <div>💰 P&L: <span style="color: {'#00d87f' if total_pnl >= 0 else '#ff4d4d'};">${total_pnl:,.2f}</span></div>
-            <div>🛡️ Risk: {"LOCKED" if risk_locked else "OK"}</div>
-            <div>⚙️ {mode}</div>
-            <div>📡 Scanner: {'🟢' if scanner_active else '🔴'}</div>
-        </div>
+<div class="bottom-status-bar" style="
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    background-color: rgba(15, 15, 35, 0.95); 
+    padding: 8px; 
+    border-top: 1px solid #00fff5;
+    backdrop-filter: blur(10px);
+    z-index: 997;  /* CHANGED: Lower than sidebar */
+    height: 40px;">
+    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #ccc;">
+        <div>🔄 Last Update: {current_time.strftime("%H:%M:%S")}</div>
+        <div>📊 Active Trades: {total_positions}</div>
+        <div>💰 P&L: <span style="color: {'#00d87f' if total_pnl >= 0 else '#ff4d4d'};">${total_pnl:,.2f}</span></div>
+        <div>🛡️ Risk: {"LOCKED" if risk_locked else "OK"}</div>
+        <div>⚙️ {mode}</div>
+        <div>📡 Scanner: {'🟢' if scanner_active else '🔴'}</div>
     </div>
-    <div style="height: 40px;"></div>
-    """, unsafe_allow_html=True)
+</div>
+<div style="height: 40px;"></div>  <!-- Spacer to prevent content overlap -->
 
+<style>
+/* Ensure main content area has proper bottom padding */
+.main .block-container {{
+    padding-bottom: 60px;  /* Add space for bottom bar */
+}}
 
-if __name__ == "__main__":
-    main()
+/* Ensure sidebar doesn't overlap with bottom bar */
+[data-testid="stSidebar"] {{
+    bottom: 50px;  /* Keep sidebar above bottom bar */
+}}
+</style>
+""", unsafe_allow_html=True)
