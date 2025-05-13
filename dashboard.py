@@ -3102,24 +3102,28 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                     
                     # Show individual scanner results
                     st.markdown("### 📊 Individual Scanner Results")
-                    
+
                     for scanner_name, result in scanner_results.items():
                         signal_emoji = {
                             'buy': '🟢',
                             'sell': '🔴',
                             'hold': '⚪'
                         }[result['signal']]
-                        
+    
                         weight = current_weights.get(scanner_name, 1.0)
                         weighted_contribution = result['confidence'] * weight
-                        
+    
+                        # Fix: Move color mapping outside f-string
+                        signal_colors = {"buy": "#00d87f", "sell": "#ff4d4d", "hold": "#888888"}
+                        signal_color = signal_colors[result["signal"]]
+    
                         # Apply signal indicator styling
                         st.markdown(f'''
                         <div class="signal-indicator">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <strong style="color: #00fff5;">{scanner_name.replace('_', ' ').title()}</strong>
-                                    <span style="margin-left: 10px; color: {{"buy": "#00d87f", "sell": "#ff4d4d", "hold": "#888888"}[result["signal"]]};">{signal_emoji} {result["signal"].upper()}</span>
+                                    <span style="margin-left: 10px; color: {signal_color};">{signal_emoji} {result["signal"].upper()}</span>
                                 </div>
                                 <div>
                                     <span style="color: white;">Confidence: {result["confidence"]:.1%}</span>
