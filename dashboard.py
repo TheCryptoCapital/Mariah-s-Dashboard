@@ -73,8 +73,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Set page layout
-st.set_page_config(page_title="The Crypto Capital", layout="wide")
-
 # Initialize session state for tracking UI state
 if "mariah_greeted" not in st.session_state:
     st.session_state["mariah_greeted"] = False
