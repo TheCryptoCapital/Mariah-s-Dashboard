@@ -3265,6 +3265,106 @@ def main():
     # =======================
     # CONTROL PANEL
     # =======================
+    st.markdown("""
+    <style>
+    .futuristic-panel {
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.15) 0%, rgba(0, 255, 245, 0.05) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 245, 0.4);
+        border-radius: 0;
+        clip-path: polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px);
+        padding: 18px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 
+            0 0 30px rgba(0, 255, 245, 0.2),
+            inset 0 1px 0 rgba(0, 255, 245, 0.1);
+    }
+
+    .futuristic-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00fff5, transparent);
+        animation: scan-line 2s ease-in-out infinite;
+    }
+
+    .futuristic-panel::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, transparent, #00fff5, transparent);
+        animation: scan-line-vertical 3s ease-in-out infinite;
+    }
+
+    @keyframes scan-line {
+        0%, 100% { opacity: 0.3; transform: translateX(-100%); }
+        50% { opacity: 1; transform: translateX(100%); }
+    }
+
+    @keyframes scan-line-vertical {
+        0%, 100% { opacity: 0.3; transform: translateY(-100%); }
+        50% { opacity: 1; transform: translateY(100%); }
+    }
+
+    .futuristic-panel:hover {
+        border-color: rgba(0, 255, 245, 0.8);
+        transform: translateY(-5px);
+        box-shadow: 
+            0 10px 40px rgba(0, 255, 245, 0.4),
+            inset 0 1px 0 rgba(0, 255, 245, 0.2);
+    }
+
+    .panel-header {
+        color: #00fff5;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+    }
+
+    .panel-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 8px 0 0 0;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        font-family: 'Courier New', monospace;
+    }
+
+    /* Corner decorations */
+    .futuristic-panel .corner-decoration {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #00fff5;
+    }
+
+    .corner-decoration.top-left {
+        top: 4px;
+        left: 4px;
+        border-bottom: none;
+        border-right: none;
+    }
+
+    .corner-decoration.bottom-right {
+        bottom: 4px;
+        right: 4px;
+        border-top: none;
+        border-left: none;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
     st.subheader("🎛️ Control Panel")
 
@@ -3273,55 +3373,31 @@ def main():
     with col1:
         pnl_color = "#00d87f" if total_pnl >= 0 else "#ff4d4d"
         st.markdown(f"""
-        <div style="
-            text-align: center; 
-            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            transition: all 0.3s ease;
-        ">
-            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">💰 Total PnL</h4>
-            <h2 style="margin: 8px 0 0 0; color: {pnl_color}; font-weight: 700;">${total_pnl:,.2f}</h2>
+        <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            <h4 class="panel-header">💰 Total PnL</h4>
+            <h2 class="panel-value" style="color: {pnl_color};">${total_pnl:,.2f}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
         st.markdown(f"""
-        <div style="
-            text-align: center; 
-            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            transition: all 0.3s ease;
-        ">
-            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">⚙️ Trading Mode</h4>
-            <h2 style="margin: 8px 0 0 0; color: {mode_colors[mode]}; font-weight: 700;">{mode}</h2>
+        <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            <h4 class="panel-header">⚙️ Trading Mode</h4>
+            <h2 class="panel-value" style="color: #00fff5;">{mode}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col3:
         st.markdown(f"""
-        <div style="
-            text-align: center; 
-            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            transition: all 0.3s ease;
-        ">
-            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">📈 Open Positions</h4>
-            <h2 style="margin: 8px 0 0 0; color: white; font-weight: 700;">{total_positions}</h2>
+        <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            <h4 class="panel-header">📈 Open Positions</h4>
+            <h2 class="panel-value" style="color: white;">{total_positions}</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -3330,38 +3406,22 @@ def main():
         risk_status = "LOCKED" if risk_locked else "OK"
         risk_icon = "🚫" if risk_locked else "✅"
         st.markdown(f"""
-        <div style="
-            text-align: center; 
-            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            transition: all 0.3s ease;
-        ">
-            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">🛡️ Risk Status</h4>
-            <h2 style="margin: 8px 0 0 0; color: {risk_color}; font-weight: 700;">{risk_icon} {risk_status}</h2>
+        <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            <h4 class="panel-header">🛡️ Risk Status</h4>
+            <h2 class="panel-value" style="color: {risk_color};">{risk_icon} {risk_status}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col5:
-        scanner_color = "#ff69b4" if scanner_active else "#888888"
+        scanner_color = "#00fff5" if scanner_active else "#666"
         st.markdown(f"""
-        <div style="
-            text-align: center; 
-            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(255, 105, 180, 0.05) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.1);
-            transition: all 0.3s ease;
-        ">
-            <h4 style="margin: 0; color: #ff69b4; font-size: 0.9rem; opacity: 0.9;">📡 Scanner</h4>
-            <h2 style="margin: 8px 0 0 0; color: {scanner_color}; font-weight: 700;">{'🟢 ON' if scanner_active else '🔴 OFF'}</h2>
+        <div class="futuristic-panel" style="text-align: center;">
+            <div class="corner-decoration top-left"></div>
+            <div class="corner-decoration bottom-right"></div>
+            <h4 class="panel-header">📡 Scanner</h4>
+            <h2 class="panel-value" style="color: {scanner_color};">{'🟢 ON' if scanner_active else '🔴 OFF'}</h2>
         </div>
         """, unsafe_allow_html=True)
 
