@@ -591,7 +591,7 @@ def set_dashboard_background(image_file):
             border-radius: 16px;
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.05);
             padding: 1rem;
-            margin: 1.5rem 0 3.0rem 0.5rem;
+            margin: 1.5rem 0 2.9rem 0.5rem;
             transition: all 0.3s ease-in-out;
             width: 360px !important;
             min-width: 360px !important;
