@@ -1,4 +1,4 @@
-Dashboard.py7
+# Updated on May 12, pushing correct VS Code version
 
 """
 Crypto Capital Dashboard - ENHANCED VERSION with Visual Improvements
