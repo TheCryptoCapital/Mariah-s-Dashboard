@@ -3086,22 +3086,22 @@ def main():
             <img src="data:image/png;base64,{brain_base64}" width="26" class="pulse-brain" />
         </div>
         """, unsafe_allow_html=True)
-        
+
         # Quick Actions Panel
         st.markdown('<div class="blur-card">', unsafe_allow_html=True)
         st.markdown("### ⚡ Quick Actions")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📡 Scanner", use_container_width=True, type="secondary"):
-                st.session_state.current_tool = "Signal Scanner"
+                st.session_state.current_tool = "Signal Scanner"  # ←← This line needed proper indentation
         with col2:
             if st.button("📰 News", use_container_width=True, type="secondary"):
                 st.session_state.current_tool = "Crypto News"
-        
+
         # Quick Execute Panel
         st.markdown("### 🚀 Quick Execute")
         quick_symbol = st.selectbox("Symbol", ["BTCUSDT", "ETHUSDT", "DOGEUSDT", "SOLUSDT"], key="quick_symbol")
-        
+
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📈 BUY", type="primary", use_container_width=True):
@@ -3110,11 +3110,32 @@ def main():
                 st.success(f"Quick BUY {quick_symbol} triggered!")
         with col2:
             if st.button("📉 SELL", use_container_width=True):
-                st.session_state.quick_action = "sell"
+                st.session_state.quick_action = "sell"  # ←← This line needed proper indentation
                 st.session_state.quick_symbol = quick_symbol
                 st.error(f"Quick SELL {quick_symbol} triggered!")
         st.markdown('</div>', unsafe_allow_html=True)
-        
+
+        # Header Toggle Section
+        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        st.markdown("### 👀 Header Control")
+
+        header_status = "Hidden" if st.session_state.get('hide_header', False) else "Visible"
+        status_color = "#ff4d4d" if st.session_state.get('hide_header', False) else "#00d87f"
+
+        st.markdown(f"""
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <span style="color: #ccc;">Header Status:</span>
+            <br>
+            <span style="color: {status_color}; font-weight: bold; font-size: 1.1rem;">{header_status}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🔁 Toggle Header", use_container_width=True, type="secondary"):
+            st.session_state.hide_header = not st.session_state.get('hide_header', False)
+            st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
         # Collapsible Tool Groups
         st.markdown('<div class="blur-card">', unsafe_allow_html=True)
         with st.expander("📊 Analytics Tools", expanded=False):
