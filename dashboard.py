@@ -48,6 +48,8 @@ from strategy_mode import get_strategy_params
 from onchain_feed import get_eth_gas, get_block_info
 from news_feed import get_crypto_news
 
+st.set_page_config(page_title="The Crypto Capital", layout="wide")
+
 # =======================
 # CONSTANTS
 # =======================
