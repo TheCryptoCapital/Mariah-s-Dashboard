@@ -3496,7 +3496,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)    
+    st.markdown('</div>', unsafe_allow_html=True)   
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
