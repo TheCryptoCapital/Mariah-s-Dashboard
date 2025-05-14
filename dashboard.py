@@ -3268,8 +3268,10 @@ def main():
     st.markdown("""
     <style>
     .futuristic-panel {
-        background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
-        border: 1px solid #00fff5;
+        background: rgba(20, 25, 40, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 255, 245, 0.6);
         clip-path: polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px);
         padding: 18px;
         position: relative;
@@ -3496,7 +3498,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)   
+    st.markdown('</div>', unsafe_allow_html=True) 
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
