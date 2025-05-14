@@ -3268,7 +3268,9 @@ def main():
     st.markdown("""
     <style>
     .futuristic-panel {
-        background: linear-gradient(135deg, #00fff5 0%, #00d87f 100%);
+        background: linear-gradient(135deg, rgba(0, 255, 245, 0.1) 0%, rgba(0, 255, 245, 0.05) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
         border: 2px solid #00fff5;
         clip-path: polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px);
         padding: 18px;
@@ -3276,32 +3278,45 @@ def main():
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 
-            0 0 30px rgba(0, 255, 245, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            0 0 30px rgba(0, 255, 245, 0.4),
+            0 0 60px rgba(0, 255, 245, 0.2),
+            inset 0 1px 0 rgba(0, 255, 245, 0.2);
     }
 
-    /* Horizontal scan line */
+    /* Enhanced horizontal scan line */
     .futuristic-panel::before {
         content: '';
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
-        animation: scan-horizontal 2.5s linear infinite;
+        height: 3px;
+        background: linear-gradient(90deg, 
+            transparent, 
+            rgba(0, 255, 245, 0.8), 
+            rgba(255, 255, 255, 1), 
+            rgba(0, 255, 245, 0.8), 
+            transparent);
+        animation: scan-horizontal 3s linear infinite;
+        box-shadow: 0 0 20px rgba(0, 255, 245, 0.8);
     }
 
-    /* Vertical scan line */
+    /* Enhanced vertical scan line */
     .futuristic-panel::after {
         content: '';
         position: absolute;
         top: -100%;
         right: 0;
-        width: 2px;
+        width: 3px;
         height: 100%;
-        background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.9), transparent);
-        animation: scan-vertical 3s linear infinite;
+        background: linear-gradient(180deg, 
+            transparent, 
+            rgba(0, 255, 245, 0.8), 
+            rgba(255, 255, 255, 1), 
+            rgba(0, 255, 245, 0.8), 
+            transparent);
+        animation: scan-vertical 4s linear infinite;
+        box-shadow: 0 0 20px rgba(0, 255, 245, 0.8);
     }
 
     @keyframes scan-horizontal {
@@ -3318,22 +3333,25 @@ def main():
         100% { top: 100%; opacity: 0; }
     }
 
+    /* Enhanced hover effects */
     .futuristic-panel:hover {
-        border-color: #ffffff;
-        transform: translateY(-5px);
+        border-color: rgba(0, 255, 245, 1);
+        transform: translateY(-8px);
         box-shadow: 
-            0 10px 40px rgba(0, 255, 245, 0.6),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            0 15px 50px rgba(0, 255, 245, 0.6),
+            0 0 100px rgba(0, 255, 245, 0.3),
+            inset 0 1px 0 rgba(0, 255, 245, 0.4);
     }
 
     .panel-header {
-        color: #000;
+        color: #00fff5;
         font-size: 0.85rem;
         font-weight: 700;
         margin: 0;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
+        letter-spacing: 2px;
         font-family: 'Courier New', monospace;
+        text-shadow: 0 0 10px rgba(0, 255, 245, 0.8);
     }
 
     .panel-value {
@@ -3341,49 +3359,73 @@ def main():
         font-weight: 700;
         margin: 8px 0 0 0;
         font-family: 'Courier New', monospace;
-        text-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     }
 
-    /* Corner brackets */
+    /* Enhanced corner brackets with glow */
     .corner-bracket {
         position: absolute;
-        width: 15px;
-        height: 15px;
-        border: 3px solid #ffffff;
+        width: 18px;
+        height: 18px;
+        border: 3px solid #00fff5;
+        box-shadow: 
+            0 0 10px rgba(0, 255, 245, 0.8),
+            inset 0 0 5px rgba(0, 255, 245, 0.3);
     }
 
     .corner-bracket.top-left {
-        top: 8px;
-        left: 8px;
+        top: 10px;
+        left: 10px;
         border-bottom: none;
         border-right: none;
     }
 
     .corner-bracket.top-right {
-        top: 8px;
-        right: 8px;
+        top: 10px;
+        right: 10px;
         border-bottom: none;
         border-left: none;
     }
 
     .corner-bracket.bottom-left {
-        bottom: 8px;
-        left: 8px;
+        bottom: 10px;
+        left: 10px;
         border-top: none;
         border-right: none;
     }
 
     .corner-bracket.bottom-right {
-        bottom: 8px;
-        right: 8px;
+        bottom: 10px;
+        right: 10px;
         border-top: none;
         border-left: none;
     }
 
-    /* Enhanced hover effect for corner brackets */
+    /* Corner brackets enhanced hover effect */
     .futuristic-panel:hover .corner-bracket {
-        border-color: #ffffff;
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+        border-color: rgba(255, 255, 255, 1);
+        box-shadow: 
+            0 0 20px rgba(0, 255, 245, 1),
+            0 0 40px rgba(0, 255, 245, 0.5),
+            inset 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Pulsing glow effect */
+    .futuristic-panel {
+        animation: panel-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes panel-pulse {
+        0%, 100% { 
+            box-shadow: 
+                0 0 30px rgba(0, 255, 245, 0.4),
+                0 0 60px rgba(0, 255, 245, 0.2);
+        }
+        50% { 
+            box-shadow: 
+                0 0 40px rgba(0, 255, 245, 0.6),
+                0 0 80px rgba(0, 255, 245, 0.3);
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -3394,7 +3436,7 @@ def main():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        pnl_color = "#000" if total_pnl >= 0 else "#ff4d4d"
+        pnl_color = "#00d87f" if total_pnl >= 0 else "#ff4d4d"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
             <div class="corner-bracket top-left"></div>
@@ -3414,7 +3456,7 @@ def main():
             <div class="corner-bracket bottom-left"></div>
             <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">⚙️ Trading Mode</h4>
-            <h2 class="panel-value" style="color: {mode_colors[mode]};">{mode}</h2>
+            <h2 class="panel-value" style="color: #00fff5;">{mode}</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -3426,12 +3468,12 @@ def main():
             <div class="corner-bracket bottom-left"></div>
             <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">📈 Open Positions</h4>
-            <h2 class="panel-value" style="color: #000;">{total_positions}</h2>
+            <h2 class="panel-value" style="color: white;">{total_positions}</h2>
         </div>
         """, unsafe_allow_html=True)
 
     with col4:
-        risk_color = "#ff4d4d" if risk_locked else "#000"
+        risk_color = "#ff4d4d" if risk_locked else "#00d87f"
         risk_status = "LOCKED" if risk_locked else "OK"
         risk_icon = "🚫" if risk_locked else "✅"
         st.markdown(f"""
@@ -3446,7 +3488,7 @@ def main():
         """, unsafe_allow_html=True)
 
     with col5:
-        scanner_color = "#000" if scanner_active else "#666"
+        scanner_color = "#00fff5" if scanner_active else "#888"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
             <div class="corner-bracket top-left"></div>
@@ -3458,7 +3500,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True)  
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
