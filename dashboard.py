@@ -3268,16 +3268,18 @@ def main():
     st.markdown("""
     <style>
     .futuristic-panel {
-        background: #00fff5;
-        border: 2px solid #00fff5;
+        background: rgba(20, 25, 40, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 255, 245, 0.6);
         clip-path: polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px);
         padding: 18px;
         position: relative;
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 
-            0 0 30px rgba(0, 255, 245, 0.4),
-            0 0 60px rgba(0, 255, 245, 0.2);
+            0 0 30px rgba(0, 255, 245, 0.2),
+            0 0 60px rgba(0, 255, 245, 0.1);
     }
 
     /* Purple horizontal scan line */
@@ -3332,11 +3334,11 @@ def main():
 
     /* Enhanced hover effects */
     .futuristic-panel:hover {
-        border-color: rgba(157, 78, 221, 1);
+        border-color: rgba(0, 255, 245, 1);
         transform: translateY(-8px);
         box-shadow: 
-            0 15px 50px rgba(0, 255, 245, 0.6),
-            0 0 100px rgba(0, 255, 245, 0.3);
+            0 15px 50px rgba(0, 255, 245, 0.4),
+            0 0 100px rgba(0, 255, 245, 0.2);
     }
 
     .panel-header {
@@ -3414,13 +3416,13 @@ def main():
     @keyframes panel-pulse {
         0%, 100% { 
             box-shadow: 
-                0 0 30px rgba(0, 255, 245, 0.4),
-                0 0 60px rgba(0, 255, 245, 0.2);
+                0 0 30px rgba(0, 255, 245, 0.2),
+                0 0 60px rgba(0, 255, 245, 0.1);
         }
         50% { 
             box-shadow: 
-                0 0 40px rgba(0, 255, 245, 0.6),
-                0 0 80px rgba(0, 255, 245, 0.3);
+                0 0 40px rgba(0, 255, 245, 0.3),
+                0 0 80px rgba(0, 255, 245, 0.15);
         }
     }
     </style>
@@ -3497,6 +3499,7 @@ def main():
         """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
         mariah_speak("Warning. Mariah is pausing trades due to risk limit.")
