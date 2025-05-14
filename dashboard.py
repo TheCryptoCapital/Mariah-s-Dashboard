@@ -18,7 +18,7 @@ os.environ['STREAMLIT_SERVER_ENABLE_WEBSOCKET_COMPRESSION'] = 'false'
 # =======================
 import streamlit as st
 import pandas as pd
-import pandas_ta as ta
+# import pandas_ta as ta
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go

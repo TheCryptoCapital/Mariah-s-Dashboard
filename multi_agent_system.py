@@ -1,4 +1,3 @@
-Keep Multi-Agent Trading System
 # Multi-Agent Trading System
 # Add this to a new file: multi_agent_system.py
 
@@ -13,6 +12,9 @@ from enum import Enum
 import logging
 from concurrent.futures import ThreadPoolExecutor
 import json
+
+# Add this import to fix the NameError
+from mariah_rl import MariahRLAgent
 
 class AgentType(Enum):
     """Different types of trading agents"""
