@@ -1,4 +1,4 @@
-# Updated on May 12, pushing correct VS Code version
+# Dashboard Bacl up Updated on May 12, pushing correct VS Code version
 """
 
 Crypto Capital Dashboard - ENHANCED VERSION with Visual Improvements
@@ -42,26 +42,13 @@ import joblib
 import logging
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-import asyncio
 
 # Local module imports
 from strategy_mode import get_strategy_params
 from onchain_feed import get_eth_gas, get_block_info
 from news_feed import get_crypto_news
-from glassnode_integration import get_enhanced_onchain_signal, render_enhanced_onchain_data
-# AI Agent imports
-from mariah_rl import EnhancedMariahLevel2
-from multi_agent_system import MultiAgentTradingSystem, MULTI_AGENT_CONFIG
 
 st.set_page_config(page_title="The Crypto Capital", layout="wide")
-
-# =======================
-# INITIALIZATION FUNCTION
-# =======================
-@st.cache_resource
-def initialize_multi_agent_system():
-    """Initialize the multi-agent trading system"""
-    return MultiAgentTradingSystem(MULTI_AGENT_CONFIG)
 
 # =======================
 # CONSTANTS
@@ -104,14 +91,6 @@ if "current_tool" not in st.session_state:
 
 if "active_tab_index" not in st.session_state:
     st.session_state.active_tab_index = 0
-
-# Initialize multi-agent system
-if 'multi_agent_system' not in st.session_state:
-    st.session_state.multi_agent_system = initialize_multi_agent_system()
-
-# Enhanced Mariah with RL
-if 'enhanced_mariah' not in st.session_state:
-    st.session_state.enhanced_mariah = EnhancedMariahLevel2()    
 
 # Initialize Bybit API connection
 API_KEY = os.getenv("API_KEY")
@@ -2009,8 +1988,10 @@ def get_simple_sentiment_score(symbol):
 
 
 def get_simple_onchain_signal(symbol):
-    """Use enhanced Glassnode on-chain analysis or fallback to mock"""
-    return get_enhanced_onchain_signal(symbol)
+    """Simplified on-chain analysis - would integrate with Glassnode/Santiment"""
+    # This would normally query on-chain data APIs
+    # For now, return a mock signal
+    import random
     
     signals = ['buy', 'sell', 'hold']
     confidences = [0.6, 0.7, 0.8, 0.9]
@@ -3033,212 +3014,6 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
             "🚨 Manually override Mariah's risk lock (not recommended)",
             value=st.session_state.get("override_risk_lock", False)
         )
-    # End the previous function here
-    st.markdown('</div>', unsafe_allow_html=True)  # This line is probably missing!
-
-# =======================
-# AI AGENTS TAB FUNCTION
-# =======================
-def render_ai_agents_tab():
-    """Render the AI Agents tab"""
-    st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-    st.subheader("🤖 AI Agent System")
-    
-    agent_tabs = st.tabs([
-        "📊 Agent Overview", 
-        "🧠 Mariah RL", 
-        "🔥 Multi-Agent Analysis"
-    ])
-    
-    with agent_tabs[0]:
-        st.subheader("🤖 AI Agent Overview")
-        
-        # System status
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Active Agents", "13")
-            st.metric("RL Enabled", "13/13")
-        
-        with col2:
-            st.metric("Training Status", "Ready")
-            st.metric("System Mode", "Initialized")
-        
-        with col3:
-            st.metric("Integration", "Complete")
-            st.metric("Status", "🟢 Online")
-        
-        # Agent types
-        st.subheader("🏗️ Agent Types")
-        
-        st.markdown("""
-        ### 🎯 **Master Coordinator**
-        - Combines signals from all agents
-        - Resolves conflicts and makes final decisions
-        
-        ### 🚀 **Specialized Trading Agents**
-        
-        **Speed-Based:**
-        - 🏃 **Scalpers (2x)**: Ultra-fast micro-movements
-        
-        **Strategy-Based:**
-        - 📈 **Swing Traders (2x)**: Support/resistance analysis
-        - ⚡ **Momentum Traders (2x)**: Trend following
-        
-        **Intelligence-Based:**
-        - 🐋 **Whale Tracker**: Large transaction analysis
-        - 📰 **News Sentiment**: Social media/news analysis
-        - 🔄 **Mean Reversion**: Overbought/oversold detection
-        - ⚖️ **Arbitrage**: Cross-market opportunities
-        - 📊 **Volatility**: High-volatility specialist
-        - 🔗 **Pairs Trader**: Relative value trades
-        - 📐 **Grid Trader**: Range-bound market specialist
-        """)
-    
-    with agent_tabs[1]:
-        st.subheader("🧠 Enhanced Mariah with RL")
-        
-        # Training controls
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("### 🎓 Training Controls")
-            
-            # Check if enhanced_mariah exists
-            if 'enhanced_mariah' in st.session_state:
-                training_mode = st.checkbox(
-                    "Enable Training Mode",
-                    value=getattr(st.session_state.enhanced_mariah, 'training_mode', False),
-                    help="When enabled, Mariah learns from every trading decision"
-                )
-                
-                if hasattr(st.session_state.enhanced_mariah, 'set_training_mode'):
-                    st.session_state.enhanced_mariah.set_training_mode(training_mode)
-            else:
-                st.warning("Enhanced Mariah not initialized yet")
-                training_mode = False
-            
-            if st.button("🏋️ Initialize Mariah RL"):
-                try:
-                    # This will test the initialization
-                    if 'enhanced_mariah' not in st.session_state:
-                        st.session_state.enhanced_mariah = EnhancedMariahLevel2()
-                    st.success("✅ Mariah RL initialized successfully!")
-                except Exception as e:
-                    st.error(f"❌ Error initializing Mariah RL: {e}")
-        
-        with col2:
-            st.markdown("### 📊 RL Status")
-            if 'enhanced_mariah' in st.session_state:
-                st.metric("Status", "🟢 Initialized")
-                st.metric("Training Mode", "🔴 Off" if not training_mode else "🟢 On")
-                st.metric("Model", "PPO Actor-Critic")
-            else:
-                st.metric("Status", "🔴 Not Initialized")
-                st.metric("Training Mode", "N/A")
-                st.metric("Model", "Not Loaded")
-        
-        # Basic analysis test
-        st.subheader("🔍 Test RL Analysis")
-        
-        symbol_for_analysis = st.selectbox(
-            "Select Symbol for Test",
-            ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT"],
-            key="mariah_rl_symbol"
-        )
-        
-        if st.button("🧠 Test Mariah RL Analysis"):
-            if 'enhanced_mariah' in st.session_state:
-                try:
-                    # Get traditional Mariah analysis for comparison
-                    traditional_analysis = st.session_state.mariah_level2.analyze_symbol(
-                        symbol_for_analysis, "15", session
-                    )
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.write("**Traditional Mariah Analysis:**")
-                        st.json(traditional_analysis)
-                    
-                    with col2:
-                        st.write("**RL Enhanced Analysis:**")
-                        st.info("RL analysis requires market data integration")
-                        st.write("Status: Ready for live trading integration")
-                        
-                except Exception as e:
-                    st.error(f"Error in analysis: {e}")
-            else:
-                st.error("Please initialize Mariah RL first")
-    
-    with agent_tabs[2]:
-        st.subheader("🔥 Multi-Agent System")
-        
-        # System status
-        if 'multi_agent_system' in st.session_state:
-            st.success("✅ Multi-Agent System Initialized")
-            
-            # Basic system info
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("Total Agents", "13")
-                st.metric("Coordinator", "Active")
-            
-            with col2:
-                st.metric("System Status", "🟢 Ready")
-                st.metric("Available Symbols", "4")
-            
-            with col3:
-                st.metric("Memory Usage", "Normal")
-                st.metric("Response Time", "< 1ms")
-            
-            # Test analysis button
-            if st.button("🚀 Test Multi-Agent Analysis"):
-                with st.spinner("Running test analysis across all agents..."):
-                    try:
-                        # Create minimal test data
-                        test_market_data = {
-                            "BTCUSDT": [{
-                                'timestamp': int(pd.Timestamp.now().timestamp()),
-                                'open': 50000.0,
-                                'high': 51000.0,
-                                'low': 49000.0,
-                                'close': 50500.0,
-                                'volume': 1000.0,
-                                'bid': 50490.0,
-                                'ask': 50510.0
-                            }]
-                        }
-                        
-                        st.success("✅ Test data prepared")
-                        st.info("🔄 Multi-agent system ready for live integration")
-                        
-                        # Show mock results
-                        st.subheader("📊 Sample Agent Signals")
-                        
-                        mock_signals = [
-                            {"Agent": "scalper_1", "Symbol": "BTCUSDT", "Action": "BUY", "Confidence": "78%"},
-                            {"Agent": "swing_1", "Symbol": "BTCUSDT", "Action": "HOLD", "Confidence": "65%"},
-                            {"Agent": "momentum_1", "Symbol": "BTCUSDT", "Action": "BUY", "Confidence": "82%"}
-                        ]
-                        
-                        df_signals = pd.DataFrame(mock_signals)
-                        st.dataframe(df_signals, use_container_width=True)
-                        
-                    except Exception as e:
-                        st.error(f"❌ Error in test analysis: {e}")
-                        import traceback
-                        st.code(traceback.format_exc())
-        else:
-            st.error("❌ Multi-Agent System not initialized")
-            
-        # Performance placeholder
-        st.subheader("📈 System Performance")
-        st.info("Performance tracking will be available once live trading begins")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # =======================
 # MAIN FUNCTION
 # =======================
@@ -3723,7 +3498,7 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True) 
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
@@ -3751,74 +3526,12 @@ def main():
     # =======================
     # ENHANCED MAIN TABS (5 instead of 8)
     # =======================
-
-    # REPLACE the existing code with this enhanced version:
-
-    # Add the CSS styling first
-    st.markdown("""
-    <style>
-    /* Enhanced tab styling with larger font */
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: rgba(20, 25, 40, 0.85);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(0, 255, 245, 0.3);
-        border-radius: 12px;
-        padding: 8px;
-        margin-bottom: 20px;
-        box-shadow: 0 0 20px rgba(0, 255, 245, 0.1);
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        color: white !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        margin: 4px;
-        padding: 12px 20px !important;
-        border: 1px solid rgba(0, 255, 245, 0.2);
-        transition: all 0.3s ease;
-    }
-
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: rgba(0, 255, 245, 0.1);
-        border-color: rgba(0, 255, 245, 0.4);
-        box-shadow: 0 0 15px rgba(0, 255, 245, 0.2);
-        transform: translateY(-2px);
-    }
-
-    .stTabs [aria-selected="true"] {
-        background-color: rgba(0, 255, 245, 0.2) !important;
-        border-color: rgba(0, 255, 245, 0.6) !important;
-        color: #00fff5 !important;
-        box-shadow: 0 0 20px rgba(0, 255, 245, 0.3);
-    }
-
-    /* Tab panel styling */
-    .stTabs [data-baseweb="tab-panel"] {
-        background-color: rgba(20, 25, 40, 0.4);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(0, 255, 245, 0.2);
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 10px;
-        box-shadow: 0 0 15px rgba(0, 255, 245, 0.05);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Wrap tabs in frost glass container
-    st.markdown('<div class="blur-card" style="padding: 20px; margin-bottom: 20px;">', unsafe_allow_html=True)
-
     main_tabs = [
         "📊 Trading Overview",
         "🤖 Bot Trading",
         "👤 Manual Trading",
         "📈 Analytics & Charts",
         "🚀 Execute & AI"
-        "🔥 AI Agents"  # Add this new tab
     ]
     
     # Handle selected tool from sidebar
@@ -3832,7 +3545,7 @@ def main():
         elif st.session_state.current_tool == "Crypto News":
             st.session_state.active_tab_index = 3  # Analytics tab
     
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(main_tabs)
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(main_tabs)
     
     # =======================
     # TAB 1: TRADING OVERVIEW
@@ -4278,7 +3991,7 @@ def main():
             elif st.session_state.current_tool == "📰 Crypto News":
                 render_crypto_news()
             elif st.session_state.current_tool == "📡 On-Chain Data":
-                render_enhanced_onchain_data()
+                render_onchain_data()
             else:
                 # Default analytics view
                 analytics_tabs = st.tabs(["📊 Growth Curve", "🔍 Tool Selection", "📈 Key Metrics"])
@@ -4568,12 +4281,6 @@ def main():
                         st.error("Pause bots function would execute here.")
             
             st.markdown('</div>', unsafe_allow_html=True)
-
-    # =======================
-    # TAB 6: AI AGENTS
-    # =======================
-    with tab6:
-        render_ai_agents_tab()        
     
     # =======================
     # BOTTOM STATUS BAR
