@@ -3268,22 +3268,20 @@ def main():
     st.markdown("""
     <style>
     .futuristic-panel {
-        background: linear-gradient(135deg, rgba(0, 255, 245, 0.1) 0%, rgba(0, 255, 245, 0.05) 100%);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 2px solid #00fff5;
+        background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
+        border: 2px solid #9d4edd;
         clip-path: polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px);
         padding: 18px;
         position: relative;
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 
-            0 0 30px rgba(0, 255, 245, 0.4),
-            0 0 60px rgba(0, 255, 245, 0.2),
-            inset 0 1px 0 rgba(0, 255, 245, 0.2);
+            0 0 30px rgba(157, 78, 221, 0.4),
+            0 0 60px rgba(157, 78, 221, 0.2),
+            inset 0 1px 0 rgba(157, 78, 221, 0.2);
     }
 
-    /* Enhanced horizontal scan line */
+    /* Enhanced horizontal scan line - Purple */
     .futuristic-panel::before {
         content: '';
         position: absolute;
@@ -3293,15 +3291,15 @@ def main():
         height: 3px;
         background: linear-gradient(90deg, 
             transparent, 
-            rgba(0, 255, 245, 0.8), 
+            rgba(157, 78, 221, 0.8), 
             rgba(255, 255, 255, 1), 
-            rgba(0, 255, 245, 0.8), 
+            rgba(157, 78, 221, 0.8), 
             transparent);
         animation: scan-horizontal 3s linear infinite;
-        box-shadow: 0 0 20px rgba(0, 255, 245, 0.8);
+        box-shadow: 0 0 20px rgba(157, 78, 221, 0.8);
     }
 
-    /* Enhanced vertical scan line */
+    /* Enhanced vertical scan line - Purple */
     .futuristic-panel::after {
         content: '';
         position: absolute;
@@ -3311,12 +3309,12 @@ def main():
         height: 100%;
         background: linear-gradient(180deg, 
             transparent, 
-            rgba(0, 255, 245, 0.8), 
+            rgba(157, 78, 221, 0.8), 
             rgba(255, 255, 255, 1), 
-            rgba(0, 255, 245, 0.8), 
+            rgba(157, 78, 221, 0.8), 
             transparent);
         animation: scan-vertical 4s linear infinite;
-        box-shadow: 0 0 20px rgba(0, 255, 245, 0.8);
+        box-shadow: 0 0 20px rgba(157, 78, 221, 0.8);
     }
 
     @keyframes scan-horizontal {
@@ -3335,12 +3333,12 @@ def main():
 
     /* Enhanced hover effects */
     .futuristic-panel:hover {
-        border-color: rgba(0, 255, 245, 1);
+        border-color: rgba(157, 78, 221, 1);
         transform: translateY(-8px);
         box-shadow: 
-            0 15px 50px rgba(0, 255, 245, 0.6),
-            0 0 100px rgba(0, 255, 245, 0.3),
-            inset 0 1px 0 rgba(0, 255, 245, 0.4);
+            0 15px 50px rgba(157, 78, 221, 0.6),
+            0 0 100px rgba(157, 78, 221, 0.3),
+            inset 0 1px 0 rgba(157, 78, 221, 0.4);
     }
 
     .panel-header {
@@ -3362,15 +3360,15 @@ def main():
         text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     }
 
-    /* Enhanced corner brackets with glow */
+    /* Enhanced corner brackets with purple glow */
     .corner-bracket {
         position: absolute;
         width: 18px;
         height: 18px;
-        border: 3px solid #00fff5;
+        border: 3px solid #9d4edd;
         box-shadow: 
-            0 0 10px rgba(0, 255, 245, 0.8),
-            inset 0 0 5px rgba(0, 255, 245, 0.3);
+            0 0 10px rgba(157, 78, 221, 0.8),
+            inset 0 0 5px rgba(157, 78, 221, 0.3);
     }
 
     .corner-bracket.top-left {
@@ -3405,12 +3403,12 @@ def main():
     .futuristic-panel:hover .corner-bracket {
         border-color: rgba(255, 255, 255, 1);
         box-shadow: 
-            0 0 20px rgba(0, 255, 245, 1),
-            0 0 40px rgba(0, 255, 245, 0.5),
+            0 0 20px rgba(157, 78, 221, 1),
+            0 0 40px rgba(157, 78, 221, 0.5),
             inset 0 0 10px rgba(255, 255, 255, 0.3);
     }
 
-    /* Pulsing glow effect */
+    /* Pulsing glow effect - Purple */
     .futuristic-panel {
         animation: panel-pulse 4s ease-in-out infinite;
     }
@@ -3418,13 +3416,13 @@ def main():
     @keyframes panel-pulse {
         0%, 100% { 
             box-shadow: 
-                0 0 30px rgba(0, 255, 245, 0.4),
-                0 0 60px rgba(0, 255, 245, 0.2);
+                0 0 30px rgba(157, 78, 221, 0.4),
+                0 0 60px rgba(157, 78, 221, 0.2);
         }
         50% { 
             box-shadow: 
-                0 0 40px rgba(0, 255, 245, 0.6),
-                0 0 80px rgba(0, 255, 245, 0.3);
+                0 0 40px rgba(157, 78, 221, 0.6),
+                0 0 80px rgba(157, 78, 221, 0.3);
         }
     }
     </style>
@@ -3456,7 +3454,7 @@ def main():
             <div class="corner-bracket bottom-left"></div>
             <div class="corner-bracket bottom-right"></div>
             <h4 class="panel-header">⚙️ Trading Mode</h4>
-            <h2 class="panel-value" style="color: #00fff5;">{mode}</h2>
+            <h2 class="panel-value" style="color: white;">{mode}</h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -3488,7 +3486,7 @@ def main():
         """, unsafe_allow_html=True)
 
     with col5:
-        scanner_color = "#00fff5" if scanner_active else "#888"
+        scanner_color = "#00d87f" if scanner_active else "#ff4d4d"
         st.markdown(f"""
         <div class="futuristic-panel" style="text-align: center;">
             <div class="corner-bracket top-left"></div>
@@ -3501,7 +3499,6 @@ def main():
         """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
         mariah_speak("Warning. Mariah is pausing trades due to risk limit.")
