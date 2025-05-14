@@ -3832,7 +3832,7 @@ def main():
         elif st.session_state.current_tool == "Crypto News":
             st.session_state.active_tab_index = 3  # Analytics tab
     
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(main_tabs)
+    tab1, tab2, tab3, tab4, tab5, = st.tabs(main_tabs)
     
     # =======================
     # TAB 1: TRADING OVERVIEW
@@ -4570,9 +4570,9 @@ def main():
             st.markdown('</div>', unsafe_allow_html=True)
 
     # =======================
-    # TAB 6: AI AGENTS
+    # TAB 5: AI AGENTS
     # =======================
-    with tab6:
+    with tab5:
         render_ai_agents_tab()        
     
     # =======================
