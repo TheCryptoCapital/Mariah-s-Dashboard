@@ -3526,6 +3526,67 @@ def main():
     # =======================
     # ENHANCED MAIN TABS (5 instead of 8)
     # =======================
+
+    # REPLACE the existing code with this enhanced version:
+
+    # Add the CSS styling first
+    st.markdown("""
+    <style>
+    /* Enhanced tab styling with larger font */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: rgba(20, 25, 40, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 255, 245, 0.3);
+        border-radius: 12px;
+        padding: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 20px rgba(0, 255, 245, 0.1);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        color: white !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        margin: 4px;
+        padding: 12px 20px !important;
+        border: 1px solid rgba(0, 255, 245, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: rgba(0, 255, 245, 0.1);
+        border-color: rgba(0, 255, 245, 0.4);
+        box-shadow: 0 0 15px rgba(0, 255, 245, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: rgba(0, 255, 245, 0.2) !important;
+        border-color: rgba(0, 255, 245, 0.6) !important;
+        color: #00fff5 !important;
+        box-shadow: 0 0 20px rgba(0, 255, 245, 0.3);
+    }
+
+    /* Tab panel styling */
+    .stTabs [data-baseweb="tab-panel"] {
+        background-color: rgba(20, 25, 40, 0.4);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 255, 245, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 10px;
+        box-shadow: 0 0 15px rgba(0, 255, 245, 0.05);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Wrap tabs in frost glass container
+    st.markdown('<div class="blur-card" style="padding: 20px; margin-bottom: 20px;">', unsafe_allow_html=True)
+
     main_tabs = [
         "📊 Trading Overview",
         "🤖 Bot Trading",
