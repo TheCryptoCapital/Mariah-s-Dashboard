@@ -4,6 +4,9 @@
 # Author: Jonathan Ferrucci
 # =======================
 
+# Version tracking
+VERSION = "1.0.1"
+
 # ✅ Page config MUST be first Streamlit command
 import streamlit as st
 st.set_page_config(page_title="The Crypto Capital", layout="wide")
@@ -4433,10 +4436,11 @@ def main():
                 <div style="font-size: 0.9rem; color: #ddd;">Enter valid entry and stop-loss prices</div>
             </div>
             """, unsafe_allow_html=True)
-    
+
         # System Status - With Matching Color
         st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
         st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>🖥️ System Status</h3>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size: 0.8rem; color: #aaaaaa; margin-bottom: 15px;'>Version: {VERSION}</div>", unsafe_allow_html=True)
         
         # RESTORE: Use the original feature display method
         features.display_sidebar_status()
