@@ -1,11 +1,18 @@
-# Updated on May 12, pushing correct VS Code version
-"""
+# =======================
+# CRYPTO CAPITAL DASHBOARD - ENHANCED VERSION
+# Updated on May 12
+# Author: Jonathan Ferrucci
+# =======================
 
-Crypto Capital Dashboard - ENHANCED VERSION with Visual Improvements
-Author: Jonathan Ferrucci
-"""
+# ✅ Page config MUST be first Streamlit command
+import streamlit as st
+st.set_page_config(page_title="The Crypto Capital", layout="wide")
 
+# =======================
+# ENVIRONMENT SETUP
+# =======================
 import os
+os.environ['TORCH_DISABLE_WATCHER'] = '1'
 os.environ['STREAMLIT_SERVER_ENABLE_CORS'] = 'false'
 os.environ['STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION'] = 'false'
 os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'
@@ -13,47 +20,366 @@ os.environ['STREAMLIT_SERVER_PORT'] = '8501'
 os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
 os.environ['STREAMLIT_SERVER_ENABLE_WEBSOCKET_COMPRESSION'] = 'false'
 
+import warnings
+warnings.filterwarnings("ignore", message="Could not infer format")
+
 # =======================
-# IMPORTS
+# CORE IMPORTS (Always Required)
 # =======================
-import streamlit as st
 import pandas as pd
-# import pandas_ta as ta
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import os
 import time
 import base64
 import csv
-import smtplib
-from email.message import EmailMessage
-import pyttsx3
-import openai
-import speech_recognition as sr
-from dotenv import load_dotenv
-from pybit.unified_trading import HTTP
 from datetime import datetime, date
-from streamlit_autorefresh import st_autorefresh
 from PIL import Image
 import math
-import joblib
 import logging
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
 import asyncio
+import subprocess
 
-# Local module imports
-from strategy_mode import get_strategy_params
-from onchain_feed import get_eth_gas, get_block_info
-from news_feed import get_crypto_news
-from glassnode_integration import get_enhanced_onchain_signal, render_enhanced_onchain_data
+# =======================
+# OPTIONAL IMPORTS WITH ERROR HANDLING
+# =======================
+# Email functionality
+try:
+    import smtplib
+    from email.message import EmailMessage
+except ImportError:
+    smtplib = EmailMessage = None
+
+# Text-to-speech
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
+
+# OpenAI
+try:
+    import openai
+except ImportError:
+    openai = None
+
+# Speech recognition
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
+
+# Environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    load_dotenv = None
+
+# Bybit trading
+try:
+    from pybit.unified_trading import HTTP
+except ImportError:
+    HTTP = None
+
+# Auto-refresh
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None
+
+# Machine Learning
+try:
+    import joblib
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import StandardScaler
+except ImportError:
+    joblib = RandomForestClassifier = StandardScaler = None
+
+# Local module imports with error handling
+try:
+    from strategy_mode import get_strategy_params
+except ImportError:
+    def get_strategy_params(mode):
+        if mode == "Scalping":
+            return 0.5, 1.0, 75, 25
+        elif mode == "Swing":
+            return 2.0, 4.0, 70, 30
+        else:  # Momentum
+            return 1.5, 3.0, 80, 20
+
+try:
+    from onchain_feed import get_eth_gas, get_block_info
+except ImportError:
+    def get_eth_gas():
+        return {"low": 20, "avg": 25, "high": 30}
+    def get_block_info():
+        return "18500000"
+
+try:
+    from news_feed import get_crypto_news
+except ImportError:
+    def get_crypto_news():
+        return []
+
+try:
+    from glassnode_integration import get_enhanced_onchain_signal, render_enhanced_onchain_data
+except ImportError:
+    def get_enhanced_onchain_signal(symbol):
+        return {"signal": "hold", "confidence": 0.5, "reason": "Mock data"}
+    def render_enhanced_onchain_data():
+        st.info("Enhanced on-chain data not available")
+
 # AI Agent imports
-from mariah_rl import EnhancedMariahLevel2
-from multi_agent_system import MultiAgentTradingSystem, MULTI_AGENT_CONFIG
+try:
+    from mariah_rl import EnhancedMariahLevel2
+except ImportError:
+    class EnhancedMariahLevel2:
+        def __init__(self):
+            self.training_mode = False
+        def set_training_mode(self, mode):
+            self.training_mode = mode
+        def get_training_stats(self):
+            return {
+                'training_mode': self.training_mode,
+                'memory_size': 0,
+                'epsilon': 0.0,
+                'torch_available': False,
+                'models_initialized': False
+            }
 
-st.set_page_config(page_title="The Crypto Capital", layout="wide")
+try:
+    from multi_agent_system import MultiAgentTradingSystem, MULTI_AGENT_CONFIG
+except ImportError:
+    class MultiAgentTradingSystem:
+        def __init__(self, config):
+            pass
+    MULTI_AGENT_CONFIG = {}
+
+# =======================
+# FEATURE AVAILABILITY FLAGS
+# =======================
+# Define availability flags based on successful imports
+TTS_AVAILABLE = pyttsx3 is not None
+OPENAI_AVAILABLE = openai is not None and bool(os.getenv("OPENAI_API_KEY"))
+STT_AVAILABLE = sr is not None
+EMAIL_AVAILABLE = smtplib is not None and EmailMessage is not None
+SKLEARN_AVAILABLE = RandomForestClassifier is not None and StandardScaler is not None
+JOBLIB_AVAILABLE = joblib is not None
+BYBIT_AVAILABLE = HTTP is not None and bool(os.getenv("API_KEY") and os.getenv("API_SECRET"))
+AUTOREFRESH_AVAILABLE = st_autorefresh is not None
+
+# Additional validation for email (check environment variables too)
+if EMAIL_AVAILABLE:
+    required_email_vars = ["EMAIL_USER", "EMAIL_PASSWORD", "EMAIL_HOST", "EMAIL_PORT"]
+    EMAIL_AVAILABLE = all(os.getenv(var) for var in required_email_vars)
+
+# Combined ML availability check
+ML_AVAILABLE = SKLEARN_AVAILABLE and JOBLIB_AVAILABLE
+
+# =======================
+# FEATURE MANAGEMENT SYSTEM
+# =======================
+class CryptoCapitalFeatures:
+    """Feature availability manager for Crypto Capital Dashboard"""
+    
+    def __init__(self):
+        # Check all features
+        self.features = {
+            'tts': TTS_AVAILABLE,
+            'ai_chat': OPENAI_AVAILABLE,
+            'speech': STT_AVAILABLE,
+            'email': EMAIL_AVAILABLE,
+            'trading': BYBIT_AVAILABLE,
+            'ml': SKLEARN_AVAILABLE and JOBLIB_AVAILABLE,
+            'autorefresh': AUTOREFRESH_AVAILABLE,
+            'agents': self._check_agents(),
+            'onchain': True,  # Always available (has fallbacks)
+            'news': True,     # Always available (has fallbacks)
+        }
+        
+        self._log_status()
+    
+    def _check_agents(self):
+        """Check AI agent availability"""
+        # Check if we have the real classes or just mocks
+        return hasattr(EnhancedMariahLevel2, '__module__') and 'mariah_rl' in str(EnhancedMariahLevel2.__module__)
+    
+    def _log_status(self):
+        """Log feature status on startup"""
+        print("=== Crypto Capital Feature Status ===")
+        for feature, available in self.features.items():
+            status = "✅" if available else "❌"
+            name = feature.replace('_', ' ').title()
+            print(f"{status} {name}: {available}")
+        print("===================================")
+    
+    def is_available(self, feature):
+        """Check if feature is available"""
+        return self.features.get(feature, False)
+    
+    def require(self, feature, error_msg=None):
+        """Require a feature with optional error message"""
+        if not self.is_available(feature):
+            if error_msg:
+                st.error(error_msg)
+            return False
+        return True
+    
+    def display_sidebar_status(self):
+        """Display feature status in sidebar"""
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 🔧 System Status")
+        
+        status_config = {
+            'tts': ('🔊', 'Text-to-Speech'),
+            'ai_chat': ('🤖', 'AI Chat'),
+            'speech': ('🎤', 'Speech Recognition'),
+            'email': ('📧', 'Email Notifications'),
+            'trading': ('💹', 'Trading API'),
+            'ml': ('🧠', 'Machine Learning'),
+            'autorefresh': ('🔄', 'Auto-refresh'),
+            'agents': ('🤖', 'Advanced AI Agents'),
+            'onchain': ('⛓️', 'On-chain Data'),
+            'news': ('📰', 'News Feed'),
+        }
+        
+        # Show status for each feature
+        for feature, available in self.features.items():
+            if feature in status_config:
+                icon, name = status_config[feature]
+                status = "✅" if available else "❌"
+                color = "#00d87f" if available else "#ff4d4d"
+                st.sidebar.markdown(f"{icon} <span style='color: {color}'>{status}</span> {name}", unsafe_allow_html=True)
+        
+        # Show install instructions for missing features
+        missing = [name for name, available in self.features.items() if not available]
+        if missing:
+            st.sidebar.markdown("---")
+            if st.sidebar.button("🔧 Show Setup Instructions"):
+                self._show_setup_instructions(missing)
+    
+    def _show_setup_instructions(self, missing_features):
+        """Show setup instructions for missing features"""
+        st.sidebar.markdown("### 📦 Setup Instructions")
+        
+        instructions = {
+            'tts': '`pip install pyttsx3`',
+            'ai_chat': '`pip install openai` + Add `OPENAI_API_KEY` to .env',
+            'speech': '`pip install SpeechRecognition`',
+            'email': 'Add EMAIL_* variables to .env file',
+            'trading': '`pip install pybit` + Add API_KEY & API_SECRET to .env',
+            'ml': '`pip install scikit-learn joblib`',
+            'autorefresh': '`pip install streamlit-autorefresh`',
+            'agents': '`pip install torch` (for advanced RL features)',
+        }
+        
+        for feature in missing_features:
+            if feature in instructions:
+                name = feature.replace('_', ' ').title()
+                st.sidebar.markdown(f"**{name}:**")
+                st.sidebar.markdown(instructions[feature])
+                st.sidebar.write("")
+
+# Initialize the feature manager
+features = CryptoCapitalFeatures()
+
+# =======================
+# UPDATED MARIAH FUNCTIONS WITH FEATURE CHECKING
+# =======================
+def get_mariah_reply(prompt, open_pnl, closed_pnl, override_on):
+    """Get AI-generated response with better error handling and timeouts."""
+    if not features.require('ai_chat'):
+        return "❌ AI chat not available. Check OpenAI setup in sidebar."
+    
+    # More comprehensive system prompt
+    system_prompt = f"""
+    You are Mariah, an AI trading assistant. You're smart, intuitive, and protective of trading capital.
+    
+    Current data:
+    - Open PnL: ${open_pnl:,.2f}
+    - Closed PnL: ${closed_pnl:,.2f}
+    - Override: {'enabled' if override_on else 'off'}
+    - Time: {pd.Timestamp.now().strftime('%H:%M:%S')}
+    
+    If PnL is negative, be more cautious and conservative in your advice.
+    If override is enabled, remind that risk controls are disabled.
+    Keep responses brief but insightful, focused on trading advice.
+    """
+    
+    try:
+        # Add timeout to prevent hanging
+        with st.spinner("Mariah is thinking..."):
+            # Try modern OpenAI API with timeout
+            if hasattr(openai, 'OpenAI'):
+                client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=250,
+                    timeout=15  # 15 second timeout
+                )
+                return response.choices[0].message.content
+            else:
+                # Legacy API fallback
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=250
+                )
+                return response["choices"][0]["message"]["content"]
+    except TimeoutError:
+        return "I'm having trouble connecting right now. Please try again in a moment."
+    except Exception as e:
+        return f"❌ AI Error: {str(e)}"
+
+def listen_to_user():
+    """Speech recognition with feature checking"""
+    if not features.require('speech', "❌ Speech recognition not available. Check setup in sidebar."):
+        return None
+    
+    try:
+        recognizer = sr.Recognizer()
+        mic = sr.Microphone()
+        
+        with mic as source:
+            st.info("🎙️ Listening...")
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source, timeout=10)
+        
+        try:
+            text = recognizer.recognize_google(audio)
+            st.success(f"You said: {text}")
+            return text
+        except sr.UnknownValueError:
+            st.error("❌ Could not understand speech")
+            return None
+        except sr.RequestError as e:
+            st.error(f"❌ Speech service error: {e}")
+            return None
+    except sr.WaitTimeoutError:
+        st.error("❌ No speech detected")
+        return None
+    except Exception as e:
+        st.error(f"❌ Speech recognition error: {e}")
+        return None
+
+def safe_autorefresh(interval=30000, key="autorefresh"):
+    """Auto-refresh with fallback"""
+    if features.is_available('autorefresh'):
+        st_autorefresh(interval=interval, key=key)
+    else:
+        # Manual refresh button as fallback
+        if st.button("🔄 Manual Refresh", key=f"manual_{key}"):
+            st.rerun()
 
 # =======================
 # INITIALIZATION FUNCTION
@@ -61,7 +387,10 @@ st.set_page_config(page_title="The Crypto Capital", layout="wide")
 @st.cache_resource
 def initialize_multi_agent_system():
     """Initialize the multi-agent trading system"""
-    return MultiAgentTradingSystem(MULTI_AGENT_CONFIG)
+    if features.is_available('agents'):
+        return MultiAgentTradingSystem(MULTI_AGENT_CONFIG)
+    else:
+        return None
 
 # =======================
 # CONSTANTS
@@ -105,13 +434,17 @@ if "current_tool" not in st.session_state:
 if "active_tab_index" not in st.session_state:
     st.session_state.active_tab_index = 0
 
+# Add this line here - Initialize minimal mode
+if "minimal_mode" not in st.session_state:
+    st.session_state.minimal_mode = False
+
 # Initialize multi-agent system
 if 'multi_agent_system' not in st.session_state:
     st.session_state.multi_agent_system = initialize_multi_agent_system()
 
 # Enhanced Mariah with RL
 if 'enhanced_mariah' not in st.session_state:
-    st.session_state.enhanced_mariah = EnhancedMariahLevel2()    
+    st.session_state.enhanced_mariah = EnhancedMariahLevel2()     
 
 # Initialize Bybit API connection
 API_KEY = os.getenv("API_KEY")
@@ -132,18 +465,101 @@ except Exception as e:
     st.stop()
 
 # =======================
+# CUSTOM TECHNICAL INDICATORS (replacing pandas_ta)
+# =======================
+def calculate_rsi(prices, period=14):
+    """Calculate RSI manually."""
+    delta = prices.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def calculate_macd(prices, fast=12, slow=26, signal=9):
+    """Calculate MACD manually."""
+    ema_fast = prices.ewm(span=fast).mean()
+    ema_slow = prices.ewm(span=slow).mean()
+    macd_line = ema_fast - ema_slow
+    macd_signal = macd_line.ewm(span=signal).mean()
+    return macd_line, macd_signal
+
+# Simple TA object to replace pandas_ta
+class SimpleTA:
+    @staticmethod
+    def rsi(prices, length=14):
+        return calculate_rsi(prices, length)
+    
+    @staticmethod
+    def macd(prices, fast=12, slow=26, signal=9):
+        macd_line, macd_signal = calculate_macd(prices, fast, slow, signal)
+        return {
+            f'MACD_{fast}_{slow}_{signal}': macd_line,
+            f'MACDs_{fast}_{slow}_{signal}': macd_signal,
+            f'MACDh_{fast}_{slow}_{signal}': macd_line - macd_signal
+        }
+
+ta = SimpleTA()
+
+# =======================
+# CUSTOM TECHNICAL INDICATORS (replacing pandas_ta)
+# =======================
+def calculate_rsi(prices, period=14):
+    """Calculate RSI manually."""
+    delta = prices.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def calculate_macd(prices, fast=12, slow=26, signal=9):
+    """Calculate MACD manually."""
+    ema_fast = prices.ewm(span=fast).mean()
+    ema_slow = prices.ewm(span=slow).mean()
+    macd_line = ema_fast - ema_slow
+    macd_signal = macd_line.ewm(span=signal).mean()
+    return macd_line, macd_signal
+
+# Simple TA object to replace pandas_ta
+class SimpleTA:
+    @staticmethod
+    def rsi(prices, length=14):
+        return calculate_rsi(prices, length)
+    
+    @staticmethod
+    def macd(prices, fast=12, slow=26, signal=9):
+        macd_line, macd_signal = calculate_macd(prices, fast, slow, signal)
+        return {
+            f'MACD_{fast}_{slow}_{signal}': macd_line,
+            f'MACDs_{fast}_{slow}_{signal}': macd_signal,
+            f'MACDh_{fast}_{slow}_{signal}': macd_line - macd_signal
+        }
+
+ta = SimpleTA()
+
+# =======================
 # ML SIGNAL GENERATOR
 # =======================
 class MLSignalGenerator:
     def __init__(self, model_path="models/rf_predictor.pkl"):
-        """Initialize the ML signal generator."""
+        """Initialize the ML signal generator with error handling."""
         self.model_path = model_path
-        self.model = self._load_model()
-        self.scaler = StandardScaler()
+        self.model = None
+        self.scaler = StandardScaler() if SKLEARN_AVAILABLE else None
         self.logger = logging.getLogger(__name__)
+        
+        # Only try to load model if packages are available
+        if JOBLIB_AVAILABLE and SKLEARN_AVAILABLE:
+            self.model = self._load_model()
+        else:
+            self.logger.warning("ML packages not available - signals will be mock data")
     
     def _load_model(self):
-        """Load the trained model if exists, otherwise return None."""
+        """Load the trained model if exists and packages are available."""
+        if not JOBLIB_AVAILABLE:
+            return None
+            
         if os.path.exists(self.model_path):
             try:
                 return joblib.load(self.model_path)
@@ -154,6 +570,10 @@ class MLSignalGenerator:
     
     def train_model(self, historical_data, lookback_periods=14, prediction_horizon=5):
         """Train a new ML model using historical price data."""
+        if not SKLEARN_AVAILABLE or not JOBLIB_AVAILABLE:
+            self.logger.warning("ML packages not available - cannot train model")
+            return None
+            
         try:
             # Create features (technical indicators)
             df = self._create_features(historical_data)
@@ -187,63 +607,12 @@ class MLSignalGenerator:
             self.logger.error(f"Error training model: {e}")
             return None
     
-    def _create_features(self, df):
-        """Create technical features for the model."""
-        df = df.copy()
-        
-        # Basic indicators
-        df['rsi'] = self._calculate_rsi(df['close'])
-        df['macd'], df['macd_signal'] = self._calculate_macd(df['close'])
-        df['bb_upper'], df['bb_middle'], df['bb_lower'] = self._calculate_bollinger_bands(df['close'])
-        
-        # Price action features
-        df['returns'] = df['close'].pct_change()
-        df['volatility'] = df['returns'].rolling(14).std()
-        df['distance_from_ma50'] = (df['close'] / df['close'].rolling(50).mean()) - 1
-        
-        # Volume features
-        df['volume_change'] = df['volume'].pct_change()
-        df['volume_ma_ratio'] = df['volume'] / df['volume'].rolling(20).mean()
-        
-        # Pattern detection
-        df['higher_high'] = ((df['high'] > df['high'].shift(1)) & 
-                             (df['high'].shift(1) > df['high'].shift(2))).astype(int)
-        df['lower_low'] = ((df['low'] < df['low'].shift(1)) & 
-                          (df['low'].shift(1) < df['low'].shift(2))).astype(int)
-        
-        return df
-    
-    def _calculate_rsi(self, prices, period=14):
-        """Calculate RSI indicator."""
-        delta = prices.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
-    
-    def _calculate_macd(self, prices, fast=12, slow=26, signal=9):
-        """Calculate MACD indicator."""
-        ema_fast = prices.ewm(span=fast, adjust=False).mean()
-        ema_slow = prices.ewm(span=slow, adjust=False).mean()
-        macd = ema_fast - ema_slow
-        macd_signal = macd.ewm(span=signal, adjust=False).mean()
-        return macd, macd_signal
-    
-    def _calculate_bollinger_bands(self, prices, period=20, std_dev=2):
-        """Calculate Bollinger Bands."""
-        middle_band = prices.rolling(window=period).mean()
-        std = prices.rolling(window=period).std()
-        upper_band = middle_band + std_dev * std
-        lower_band = middle_band - std_dev * std
-        return upper_band, middle_band, lower_band
-    
     def get_signal(self, latest_data):
         """Generate trading signal using the ML model."""
-        if self.model is None:
-            self.logger.warning("ML model not loaded. Cannot generate signal.")
-            return "hold", 0.0
+        if not SKLEARN_AVAILABLE or self.model is None:
+            self.logger.warning("ML model not available. Returning mock signal.")
+            # Return mock signal
+            return "hold", 0.5
             
         try:
             # Create features for latest data
@@ -277,29 +646,40 @@ class MLSignalGenerator:
             self.logger.error(f"Error generating ML signal: {e}")
             return "hold", 0.0
     
-    def get_feature_importance(self):
-        """Return the feature importance from the model."""
-        if self.model is None:
-            return None
+    # Add error checking to other methods as well...
+    def _create_features(self, df):
+        """Create technical features for the model with error handling."""
+        if df.empty:
+            return df
             
+        df = df.copy()
+        
         try:
-            # Get feature names from the latest created features
-            feature_names = self._create_features(pd.DataFrame({
-                'timestamp': [], 'open': [], 'high': [], 'low': [], 'close': [], 'volume': []
-            })).columns.tolist()
+            # Basic indicators
+            df['rsi'] = self._calculate_rsi(df['close'])
+            df['macd'], df['macd_signal'] = self._calculate_macd(df['close'])
+            df['bb_upper'], df['bb_middle'], df['bb_lower'] = self._calculate_bollinger_bands(df['close'])
             
-            # Filter out non-feature columns
-            feature_names = [f for f in feature_names if f not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+            # Price action features
+            df['returns'] = df['close'].pct_change()
+            df['volatility'] = df['returns'].rolling(14).std()
+            df['distance_from_ma50'] = (df['close'] / df['close'].rolling(50).mean()) - 1
             
-            # Get feature importances
-            importances = self.model.feature_importances_
+            # Volume features
+            df['volume_change'] = df['volume'].pct_change()
+            df['volume_ma_ratio'] = df['volume'] / df['volume'].rolling(20).mean()
             
-            # Return as dictionary
-            return dict(zip(feature_names[:len(importances)], importances))
+            # Pattern detection
+            df['higher_high'] = ((df['high'] > df['high'].shift(1)) & 
+                                 (df['high'].shift(1) > df['high'].shift(2))).astype(int)
+            df['lower_low'] = ((df['low'] < df['low'].shift(1)) & 
+                              (df['low'].shift(1) < df['low'].shift(2))).astype(int)
+            
+            return df
             
         except Exception as e:
-            self.logger.error(f"Error getting feature importance: {e}")
-            return None
+            self.logger.error(f"Error creating features: {e}")
+            return df
 
 # =======================
 # ENHANCED MARIAH LEVEL 2
@@ -461,39 +841,75 @@ class MariahLevel2:
             confidence = min(abs(strength) / 5, 1.0)
             return {"signal": "sell", "confidence": confidence, "alignment": "bearish"}
         
-        # Mixed signals
+# Mixed signals
         return {"signal": "hold", "confidence": 0.0, "alignment": "mixed"}
     
     def _check_bollinger_bands(self, df):
-        """Check Bollinger Band signals"""
-        bbands = ta.bbands(df['close'], length=20, std=2)
-        
-        current_price = df['close'].iloc[-1]
-        upper_band = bbands['BBU_20_2.0'].iloc[-1]
-        lower_band = bbands['BBL_20_2.0'].iloc[-1]
-        middle_band = bbands['BBM_20_2.0'].iloc[-1]
-        
-        # Calculate position within bands
-        band_position = (current_price - lower_band) / (upper_band - lower_band)
-        
-        # Near upper band (overbought)
-        if band_position > 0.95:
-            return {"signal": "sell", "confidence": 0.6, "position": band_position}
-        
-        # Near lower band (oversold)
-        elif band_position < 0.05:
-            return {"signal": "buy", "confidence": 0.6, "position": band_position}
-        
-        # Bollinger squeeze (low volatility)
-        band_width = (upper_band - lower_band) / middle_band
-        avg_band_width = bbands['BBU_20_2.0'].rolling(10).mean().iloc[-1] - bbands['BBL_20_2.0'].rolling(10).mean().iloc[-1]
-        avg_band_width /= bbands['BBM_20_2.0'].rolling(10).mean().iloc[-1]
-        
-        if band_width < avg_band_width * 0.7:
-            return {"signal": "hold", "confidence": 0.3, "position": band_position, "note": "squeeze"}
-        
-        return {"signal": "hold", "confidence": 0.0, "position": band_position}
-    
+        """Check Bollinger Band signals with error handling"""
+        try:
+            # Check if we have enough data
+            if len(df) < 20:
+                return {"signal": "hold", "confidence": 0.0, "position": 0.5, "note": "insufficient data"}
+            
+            bbands = ta.bbands(df['close'], length=20, std=2)
+            
+            # Check if bbands calculation was successful
+            if not all(key in bbands for key in ['BBU_20_2.0', 'BBM_20_2.0', 'BBL_20_2.0']):
+                return {"signal": "hold", "confidence": 0.0, "position": 0.5, "note": "calculation error"}
+            
+            current_price = df['close'].iloc[-1]
+            upper_band = bbands['BBU_20_2.0'].iloc[-1]
+            lower_band = bbands['BBL_20_2.0'].iloc[-1]
+            middle_band = bbands['BBM_20_2.0'].iloc[-1]
+            
+            # Prevent division by zero
+            band_range = upper_band - lower_band
+            if band_range == 0:
+                return {"signal": "hold", "confidence": 0.0, "position": 0.5, "note": "zero band range"}
+            
+            # Calculate position within bands
+            band_position = (current_price - lower_band) / band_range
+            
+            # Near upper band (overbought)
+            if band_position > 0.95:
+                return {"signal": "sell", "confidence": 0.6, "position": band_position}
+            
+            # Near lower band (oversold)
+            elif band_position < 0.05:
+                return {"signal": "buy", "confidence": 0.6, "position": band_position}
+            
+            # Prevent division by zero for band_width
+            if middle_band == 0:
+                return {"signal": "hold", "confidence": 0.0, "position": band_position, "note": "zero middle band"}
+            
+            # Bollinger squeeze (low volatility)
+            band_width = band_range / middle_band
+            
+            # Safely calculate the average band width
+            try:
+                upper_ma = bbands['BBU_20_2.0'].rolling(10).mean().iloc[-1]
+                lower_ma = bbands['BBL_20_2.0'].rolling(10).mean().iloc[-1]
+                middle_ma = bbands['BBM_20_2.0'].rolling(10).mean().iloc[-1]
+                
+                if middle_ma == 0:
+                    return {"signal": "hold", "confidence": 0.0, "position": band_position, "note": "zero middle band average"}
+                
+                avg_band_width = (upper_ma - lower_ma) / middle_ma
+                
+                if band_width < avg_band_width * 0.7:
+                    return {"signal": "hold", "confidence": 0.3, "position": band_position, "note": "squeeze"}
+                
+            except Exception:
+                # If any error in calculating the average band width, just return the current position
+                return {"signal": "hold", "confidence": 0.0, "position": band_position, "note": "calculation error"}
+            
+            return {"signal": "hold", "confidence": 0.0, "position": band_position}
+            
+        except Exception as e:
+            # Catch any other exceptions
+            return {"signal": "hold", "confidence": 0.0, "position": 0.5, "error": str(e)}
+          
+        # Combine all signals with weighted scoring      
     def _combine_signals(self, signals):
         """Combine all signals with weighted scoring"""
         # Weight each signal type
@@ -567,6 +983,151 @@ class MariahLevel2:
 # =======================
 # UTILITY FUNCTIONS
 # =======================
+def set_video_background(video_path):
+    """Set a video as the dashboard background using base64 encoding."""
+    try:
+        with open(video_path, "rb") as video_file:
+            encoded_string = base64.b64encode(video_file.read()).decode()
+
+        st.markdown(f"""
+        <style>
+        #video-background {{
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1000;
+            background-size: cover;
+            filter: brightness(0.4);
+        }}
+
+        html, body, .stApp {{
+            background: transparent;
+        }}
+
+        .stApp::before {{
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 35% 40%, rgba(80, 0, 150, 0.4) 0%, rgba(10, 0, 30, 0.8) 60%),
+                linear-gradient(rgba(20, 10, 40, 0.7), rgba(20, 10, 40, 0.7));
+            z-index: -999;
+            pointer-events: none;
+        }}
+
+        .blur-card, section.main .blur-card {{
+            background-color: rgba(30, 0, 60, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 3px solid rgba(0, 255, 245, 0.6) !important; /* Thicker border with more opacity */
+            box-shadow: 0 0 25px rgba(0, 255, 245, 0.15) !important; /* Enhanced glow */
+        }}
+
+        /* Enhanced hover effect for blur-card */
+        .blur-card:hover {{
+            border-color: rgba(0, 255, 245, 0.9) !important;
+            box-shadow: 0 0 35px rgba(0, 255, 245, 0.25) !important;
+        }}
+
+        /* Enhanced tab container with thicker border */
+        .stTabs [data-baseweb="tab-list"] {{
+            background-color: rgba(20, 25, 40, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 3px solid rgba(0, 255, 245, 0.6) !important; /* Thicker border */
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 25px rgba(0, 255, 245, 0.15) !important; /* Enhanced glow */
+        }}
+
+        /* Add hover effect to the tab container */
+        .stTabs [data-baseweb="tab-list"]:hover {{
+            border-color: rgba(0, 255, 245, 0.9) !important;
+            box-shadow: 0 0 35px rgba(0, 255, 245, 0.25) !important;
+        }}
+
+        /* Target the tab panels specifically */
+        .stTabs [data-baseweb="tab-panel"] {{
+            background-color: rgba(20, 25, 40, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 3px solid rgba(0, 255, 245, 0.6) !important; /* Thicker border */
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+            box-shadow: 0 0 25px rgba(0, 255, 245, 0.15) !important; /* Enhanced glow */
+        }}
+
+        /* Add hover effect to the tab panels */
+        .stTabs [data-baseweb="tab-panel"]:hover {{
+            border-color: rgba(0, 255, 245, 0.9) !important;
+            box-shadow: 0 0 35px rgba(0, 255, 245, 0.25) !important;
+        }}
+
+        [data-testid="stSidebar"] {{
+            background-color: rgba(30, 20, 60, 0.4) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.05);
+            padding: 1rem;
+            margin: 1.5rem 0 2.8rem 0.5rem;
+            transition: all 0.3s ease-in-out;
+            width: 360px !important;
+            min-width: 360px !important;
+        }}
+        [data-testid="stSidebar"]:hover {{
+            box-shadow: 0 0 35px rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }}
+
+        /* Add scrollbar styling here */
+        [data-testid="stSidebar"] ::-webkit-scrollbar {{
+            width: 10px;
+        }}
+
+        [data-testid="stSidebar"] ::-webkit-scrollbar-track {{
+            background: rgba(30, 20, 60, 0.3);
+            border-radius: 10px;
+        }}
+
+        [data-testid="stSidebar"] ::-webkit-scrollbar-thumb {{
+            background: #00fff5;
+            border-radius: 10px;
+            border: 2px solid rgba(30, 20, 60, 0.8);
+            box-shadow: 0 0 8px rgba(0, 255, 245, 0.5);
+        }}
+
+        [data-testid="stSidebar"] ::-webkit-scrollbar-thumb:hover {{
+            background: #00fff5;
+            box-shadow: 0 0 12px rgba(0, 255, 245, 0.8);
+        }}
+
+        /* For Firefox */
+        [data-testid="stSidebar"] {{
+            scrollbar-width: thin;
+            scrollbar-color: #00fff5 rgba(30, 20, 60, 0.3);
+        }}
+        </style>
+
+        <video autoplay muted loop id="video-background">
+            <source src="data:video/mp4;base64,{encoded_string}" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"❌ Failed to set video background: {e}")
+
 def create_crypto_ticker(session):
     """Create a seamless crypto ticker with no gaps"""
     
@@ -592,6 +1153,25 @@ def create_crypto_ticker(session):
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }}
     
+    /* Add your new header container styling here */
+    .header-container {{
+        border-radius: 16px;
+        border: 2px solid #00fff5;
+        box-shadow: 0 0 15px #00fff5, 
+                    0 0 30px rgba(0, 255, 245, 0.5);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background-color: rgba(30, 0, 60, 0.8);
+        padding: 20px;
+        margin-bottom: 1rem;
+    }}
+
+    .header-container:hover {{
+        box-shadow: 0 0 20px #00fff5, 
+                    0 0 40px rgba(0, 255, 245, 0.6),
+                    0 0 60px rgba(0, 255, 245, 0.4);
+}}            
+
     .ticker-scroll {{
         display: flex;
         align-items: center;
@@ -916,9 +1496,11 @@ def check_max_daily_loss(df_bot_closed, df_manual_closed):
         if not df.empty:
             df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
     
-    df_all = pd.concat([df_bot_safe, df_manual_safe])
+    dfs_to_concat = [df for df in [df_bot_safe, df_manual_safe] if not df.empty]
+    df_all = pd.concat(dfs_to_concat, ignore_index=True) if dfs_to_concat else pd.DataFrame()
+
     df_today = df_all[df_all["timestamp"].dt.date == today] if not df_all.empty else pd.DataFrame()
-    
+
     pnl_today = df_today["Realized PnL ($)"].sum() if not df_today.empty else 0
     
     if pnl_today <= MAX_DAILY_LOSS:
@@ -1358,74 +1940,66 @@ def trailing_stop_loss(session, threshold_pct=0.01, buffer_pct=0.015, log_slot=N
 # MARIAH AI ASSISTANT FUNCTIONS
 # =======================
 def mariah_speak(text):
-    """Text-to-speech function for Mariah's voice."""
+    """Mac-optimized text-to-speech function for Mariah's voice"""
+    print(f"DEBUG: mariah_speak called with text: {text[:20]}...")
+    
     # Skip if muted
     if st.session_state.get("mute_mariah", False):
+        print("DEBUG: Mariah is muted, returning without speaking")
         return
-        
+    
     try:
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 160)  # Speaking speed
-        engine.setProperty('volume', 0.9)  # Volume level
+        # Use native macOS 'say' command - more reliable on Macs
+        subprocess.call(['say', text])
+        print("DEBUG: Speech completed using macOS say command")
+    except Exception as e:
+        print(f"DEBUG: Error with say command: {str(e)}")
+        st.info(f"🤖 Mariah: {text}")  # Fallback to text display
+        
+        # List available voices
+        voices = engine.getProperty('voices')
+        print(f"DEBUG: Found {len(voices)} voices")
+        
+        # Print available voices to help troubleshoot
+        for i, voice in enumerate(voices):
+            print(f"DEBUG: Voice {i}: {voice.name} ({voice.id})")
+        
+        # Try to select a female voice
+        voice_found = False
+        for voice in voices:
+            if "female" in voice.name.lower() or "fiona" in voice.name.lower():
+                print(f"DEBUG: Selected female voice: {voice.name}")
+                engine.setProperty('voice', voice.id)
+                voice_found = True
+                break
+        
+        if not voice_found and voices:
+            print(f"DEBUG: No female voice found, using first available: {voices[0].name}")
+            engine.setProperty('voice', voices[0].id)
+        
+        # Configure speech properties
+        engine.setProperty('rate', 160)     # Speed
+        engine.setProperty('volume', 1.0)   # Volume (increase to maximum)
+        
+        print("DEBUG: About to speak text")
+        # Speak the text
         engine.say(text)
+        print("DEBUG: Called engine.say(), now calling runAndWait()")
         engine.runAndWait()
+        print("DEBUG: Speech completed successfully")
         engine.stop()  # Clean up
-    except Exception as e:
-        st.warning(f"Mariah voice error: {e}")
-
-def get_mariah_reply(prompt, open_pnl, closed_pnl, override_on):
-    """Get AI-generated response from Mariah assistant."""
-    try:
-        context = (
-            f"Open PnL is ${open_pnl:,.2f}. "
-            f"Closed PnL is ${closed_pnl:,.2f}. "
-            f"Override is {'enabled' if override_on else 'off'}. "
-        )
         
-        # Use the new OpenAI client format if available
-        if hasattr(openai, 'OpenAI'):
-            client = openai.OpenAI(api_key=openai.api_key)
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are Mariah, an AI trading assistant. "
-                            "You're smart, intuitive, and protective of Jonathan's capital. "
-                            f"Live dashboard data: {context}"
-                        )
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=250
-            )
-            return response.choices[0].message.content
-        else:
-            # Fallback to legacy format
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are Mariah, an AI trading assistant. "
-                            "You're smart, intuitive, and protective of Jonathan's capital. "
-                            f"Live dashboard data: {context}"
-                        )
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=250
-            )
-            return response["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"Mariah AI error: {e}"
+        print(f"DEBUG: Error in mariah_speak: {str(e)}")
+        st.warning(f"Mariah voice error: {e}")
+        st.info(f"🤖 Mariah: {text}")  # Fallback to text display
 
 def listen_to_user():
-    """Speech-to-text function for voice input."""
+    """Speech-to-text function for voice input with error handling."""
+    if not STT_AVAILABLE:
+        st.warning("⚠️ Speech recognition not available - missing speech_recognition package")
+        return None
+        
     try:
         recognizer = sr.Recognizer()
         mic = sr.Microphone()
@@ -1456,13 +2030,31 @@ def listen_to_user():
         return None
 
 def send_email_with_attachment(subject, body, to_email, filename):
-    """Send email with attachment."""
+    """Send email with attachment with error handling."""
+    if not EMAIL_AVAILABLE:
+        st.warning("⚠️ Email functionality not available - missing email packages")
+        return False
+    
+    # Check for required environment variables
+    required_env_vars = ["EMAIL_USER", "EMAIL_PASSWORD", "EMAIL_HOST", "EMAIL_PORT"]
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        st.error(f"❌ Missing email configuration: {', '.join(missing_vars)}")
+        st.info("Please set EMAIL_USER, EMAIL_PASSWORD, EMAIL_HOST, and EMAIL_PORT in your .env file")
+        return False
+    
     try:
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = os.getenv("EMAIL_USER")
         msg["To"] = to_email
         msg.set_content(body)
+        
+        # Check if file exists before trying to attach
+        if not os.path.exists(filename):
+            st.error(f"❌ File not found: {filename}")
+            return False
         
         with open(filename, "rb") as f:
             file_data = f.read()
@@ -1473,8 +2065,92 @@ def send_email_with_attachment(subject, body, to_email, filename):
             server.starttls()
             server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASSWORD"))
             server.send_message(msg)
+        
+        st.success(f"✅ Email sent successfully to {to_email}")
+        return True
+        
     except Exception as e:
         st.error(f"❌ Failed to send email: {e}")
+        return False
+
+# Add this function for better error handling in the main dashboard
+def safe_mariah_greeting():
+    if not st.session_state.get("mariah_greeted", False):
+        greeting_text = "System online. Welcome to the Crypto Capital."
+        
+        if features.is_available('tts'):  # Changed from TTS_AVAILABLE
+            try:
+                mariah_speak(greeting_text)
+            except Exception as e:
+                st.warning(f"TTS error: {e}")
+                st.success(f"🤖 Mariah: {greeting_text}")
+        else:
+            st.success(f"🤖 Mariah: {greeting_text}")
+        
+        st.session_state["mariah_greeted"] = True
+
+# Additional helper function for checking package availability
+def check_mariah_capabilities():
+    """Check and display Mariah's available capabilities"""
+    capabilities = {
+        "Text-to-Speech": TTS_AVAILABLE,
+        "AI Chat (OpenAI)": OPENAI_AVAILABLE and bool(openai.api_key),
+        "Speech Recognition": STT_AVAILABLE,
+        "Email Notifications": EMAIL_AVAILABLE,
+        "Enhanced RL": MARIAH_RL_AVAILABLE if 'MARIAH_RL_AVAILABLE' in globals() else False
+    }
+    
+    return capabilities
+
+def display_mariah_status():
+    """Display Mariah's current status and capabilities"""
+    capabilities = check_mariah_capabilities()
+    
+    st.markdown("### 🤖 Mariah Capabilities")
+    for capability, available in capabilities.items():
+        status_icon = "✅" if available else "❌"
+        status_text = "Available" if available else "Unavailable"
+        st.write(f"{status_icon} **{capability}**: {status_text}")
+    
+    # Show missing packages if any
+    missing_features = [name for name, available in capabilities.items() if not available]
+    if missing_features:
+        st.info(f"To enable missing features, install required packages and check your .env configuration.")
+
+# Mock functions for when packages are unavailable (add these at the top of your file)
+if not TTS_AVAILABLE:
+    def pyttsx3_mock():
+        class MockEngine:
+            def setProperty(self, *args): pass
+            def say(self, *args): pass
+            def runAndWait(self): pass
+            def stop(self): pass
+        return MockEngine()
+    
+    # Replace pyttsx3.init with mock if not available
+    import types
+    pyttsx3 = types.ModuleType('pyttsx3')
+    pyttsx3.init = pyttsx3_mock
+
+if not STT_AVAILABLE:
+    # Create mock sr module
+    import types
+    sr = types.ModuleType('speech_recognition')
+    
+    class MockRecognizer:
+        def adjust_for_ambient_noise(self, *args): pass
+        def listen(self, *args, **kwargs): return None
+        def recognize_google(self, *args): raise Exception("Speech recognition not available")
+    
+    class MockMicrophone:
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+    
+    sr.Recognizer = MockRecognizer
+    sr.Microphone = MockMicrophone
+    sr.UnknownValueError = Exception
+    sr.RequestError = Exception
+    sr.WaitTimeoutError = Exception
 
 # =======================
 # ADVANCED ANALYTICS FUNCTIONS
@@ -1979,8 +2655,6 @@ def render_advanced_analytics(df_trades, df_pnl):
         with col2:
             st.metric("95th Percentile Max Drawdown", f"${pct_95_dd:.2f}")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # =======================
 # ENHANCED SIGNAL SCANNER SYSTEM
 # =======================
@@ -2192,9 +2866,6 @@ def render_daily_pnl():
     except Exception as e:
         st.error(f"❌ Error loading daily PnL data: {e}")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
 def render_performance_trends():
     """Render Performance Trends view"""
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -2307,9 +2978,6 @@ def render_performance_trends():
     except Exception as e:
         st.error(f"❌ Error analyzing performance trends: {e}")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
 def render_filter_by_date():
     """Render Filter by Date view"""
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -2459,8 +3127,6 @@ def render_filter_by_date():
         except Exception as e:
             st.error(f"❌ Error filtering trades: {e}")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
 def render_crypto_news():
     """Render the Crypto News tab."""
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -2571,9 +3237,6 @@ def render_crypto_news():
     except Exception as e:
         st.error(f"❌ Failed to fetch crypto news: {e}")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
 def render_onchain_data():
     """Render On-Chain Data tab."""
     st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -2705,8 +3368,6 @@ def render_onchain_data():
         st.error(f"❌ Failed to fetch on-chain data: {e}")
         st.info("Please check your internet connection and API keys.")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
 def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed):
     """Enhanced Multi-Signal Scanner with weighted consensus logic"""
     with st.container():
@@ -2911,6 +3572,13 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                                 'confidence': analysis['confidence'],
                                 'reason': analysis['summary']
                             }
+                        else:
+                            # Add the scanner even if there's an error
+                            scanner_results['enhanced'] = {
+                                'signal': 'hold',
+                                'confidence': 0.0,
+                                'reason': f"Enhanced analysis failed: {analysis.get('error', 'Unknown error')}"
+                            }
                     
                     # Calculate Weighted Consensus
                     consensus_result = calculate_weighted_consensus(scanner_results, current_weights, min_consensus)
@@ -3024,8 +3692,6 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
                     import traceback
                     st.code(traceback.format_exc())
         
-        st.markdown('</div>', unsafe_allow_html=True)
-        
         # Risk Controls
         st.markdown("---")
         st.markdown("### 🛑 Risk Controls")
@@ -3033,8 +3699,6 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
             "🚨 Manually override Mariah's risk lock (not recommended)",
             value=st.session_state.get("override_risk_lock", False)
         )
-    # End the previous function here
-    st.markdown('</div>', unsafe_allow_html=True)  # This line is probably missing!
 
 # =======================
 # AI AGENTS TAB FUNCTION
@@ -3237,35 +3901,113 @@ def render_ai_agents_tab():
         st.subheader("📈 System Performance")
         st.info("Performance tracking will be available once live trading begins")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # =======================
 # MAIN FUNCTION
 # =======================
 def main():
     """Enhanced main dashboard function with visual improvements."""
-    
-    # Load environment variables
+
+    # Check for URL parameters to toggle minimal mode
+    if "minimal_mode" in st.query_params:
+        # Convert parameter to integer (0 or 1)
+        minimal_mode_param = int(st.query_params["minimal_mode"])
+        # Update session state based on parameter
+        st.session_state.minimal_mode = (minimal_mode_param == 1)
+
+    # ✅ Load environment variables
     load_dotenv()
-    
-    # Set OpenAI API key
+
+    # ✅ Set OpenAI API key
     openai.api_key = os.getenv("OPENAI_API_KEY")
-    
-    # ADD THIS LINE HERE - RIGHT AFTER page config
+
+    # ✅ Set video background using local file path
+    video_path = "/Users/jonathanferrucci/Documents/reflections_final/My Video.mp4"
+    if os.path.exists(video_path):
+        set_video_background(video_path)
+    else:
+        st.error(f"❌ Video file not found at: {video_path}")
+
+    # Update the minimal mode CSS to hide sidebar and add a floating toggle
+    if st.session_state.minimal_mode:
+        # First add the CSS to hide elements
+        st.markdown("""
+        <style>
+        /* Hide all content including sidebar */
+        .main .block-container, 
+        header[data-testid="stHeader"],
+        .crypto-ticker,
+        div[data-testid="stStatusWidget"],
+        footer,
+        [data-testid="stSidebar"] {
+            display: none !important;
+        }
+
+        /* Make sure video is visible and takes full space */
+        #video-background {
+            filter: brightness(0.8) !important;
+            z-index: -1 !important;
+        }
+
+        /* Create a visible container for our button */
+        div.element-container:has(button) {
+            position: fixed !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+        }
+
+        /* Style the button itself */
+        button {
+            background-color: rgba(0, 255, 245, 0.2) !important;
+            color: white !important;
+            padding: 12px 24px !important;
+            border-radius: 50px !important;
+            font-weight: bold !important;
+            border: 2px solid rgba(0, 255, 245, 0.6) !important;
+            box-shadow: 0 0 20px rgba(0, 255, 245, 0.4) !important;
+            backdrop-filter: blur(5px) !important;
+            transition: all 0.3s ease !important;
+            font-size: 16px !important;
+            min-width: 200px !important;
+        }
+
+        button:hover {
+            background-color: rgba(0, 255, 245, 0.4) !important;
+            box-shadow: 0 0 30px rgba(0, 255, 245, 0.7) !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Use a container to better position the button
+        button_container = st.container()
+        with button_container:
+            # Create a Streamlit button
+            if st.button("Return to Dashboard", key="return_btn", type="primary", use_container_width=False):
+                st.session_state.minimal_mode = False
+                st.rerun()
+            
+        return  # Skip rendering the rest of the dashboard when in minimal mode
+
+    # ✅ Continue with the rest of the app
     create_crypto_ticker(session)
-    
-    # Initial Mariah greeting
-    if not st.session_state.get("mariah_greeted", False):
-        mariah_speak("System online. Welcome to the Crypto Capital.")
-        st.session_state["mariah_greeted"] = True
+    safe_mariah_greeting()  # This is sufficient - it handles the greeting logic
     
     # Load images with error handling
     logo_base64 = get_base64_image("IMG_7006.PNG")
     brain_base64 = get_base64_image("updatedbrain1.png")
     
-    # Apply background image
-    set_dashboard_background("Screenshot 2025.png")
     
+    # Apply video background
+    video_path = "/Users/jonathanferrucci/Documents/reflections_final/My Video.mp4"
+    if os.path.exists(video_path):
+        set_video_background(video_path)
+    else:
+        st.error(f"❌ Video file not found at: {video_path}")
+
+
     # =======================
     # ENHANCED HEADER
     # =======================
@@ -3277,7 +4019,7 @@ def main():
     
     with header_col1:
         st.markdown(f"""
-        <div class="blur-card" style="display: flex; align-items: center; gap: 20px; margin-bottom: 1rem;">
+        <div class="header-container" style="display: flex; align-items: center; gap: 20px; margin-bottom: 1rem;">
             <img src="data:image/png;base64,{logo_base64}" width="180" class="glow-on-hover" />
             <div style="font-size: 4rem; font-weight: 800; color: white;">
                 The <span style="color: #00fff5;">Crypto</span> Capital
@@ -3299,32 +4041,144 @@ def main():
             """, unsafe_allow_html=True)
     except Exception as e:
         st.error(f"❌ Could not load Mariah avatar: {e}")
-    
+        
     # =======================
     # ENHANCED SIDEBAR
     # =======================
     with st.sidebar:
-        # AI Banner
+        # Add custom CSS for pink-bordered input fields with stronger styling
+        st.markdown("""
+        <style>
+            /* Pink borders for number inputs - MORE PROMINENT */
+            div[data-testid="stNumberInput"] > div {
+                border: 2px solid #FF00FF !important;
+                border-radius: 8px !important;
+                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+                padding: 2px !important;
+                background-color: rgba(30, 0, 48, 0.7) !important;
+            }
+            
+            /* Focus state for inputs */
+            div[data-testid="stNumberInput"] > div:focus-within {
+                border: 2px solid #FF00FF !important;
+                box-shadow: 0 0 20px rgba(255, 0, 255, 0.8) !important;
+            }
+            
+            /* Pink styling for sliders */
+            div[data-testid="stSlider"] .stSlider > div > div > div {
+                background-color: #FF00FF !important;
+                box-shadow: 0 0 10px #FF00FF !important;
+            }
+            
+            /* Slider track */
+            div[data-testid="stSlider"] .stSlider > div > div {
+                background-color: rgba(255, 0, 255, 0.3) !important;
+            }
+            
+            /* Style for selectbox with pink border */
+            div[data-testid="stSelectbox"] > div > div {
+                border: 2px solid #FF00FF !important;
+                border-radius: 8px !important;
+                background-color: rgba(30, 0, 48, 0.7) !important;
+                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+            }
+            
+            /* Style for expanders with thicker teal borders - UPDATED */
+            .streamlit-expanderHeader {
+                border: 3px solid #00fff5 !important; /* Increased from 2px to 3px */
+                border-radius: 8px !important;
+                background-color: rgba(0, 255, 245, 0.08) !important; /* Increased opacity */
+                box-shadow: 0 0 15px rgba(0, 255, 245, 0.4) !important; /* Stronger glow */
+            }
+            
+            /* Style for expander content with thicker borders - UPDATED */
+            .streamlit-expanderContent {
+                border-top: none !important;
+                border-left: 3px solid #00fff5 !important; /* Increased from 2px to 3px */
+                border-right: 3px solid #00fff5 !important; /* Increased from 2px to 3px */
+                border-bottom: 3px solid #00fff5 !important; /* Increased from 2px to 3px */
+                border-radius: 0 0 8px 8px !important;
+                background-color: rgba(0, 255, 245, 0.03) !important; /* Slightly increased */
+                box-shadow: inset 0 0 15px rgba(0, 255, 245, 0.15) !important; /* Stronger inner glow */
+            }
+            
+            /* Make blur-card have pink glow on hover for interactivity */
+            .blur-card:hover {
+                border-color: rgba(255, 0, 255, 0.5) !important;
+                box-shadow: 0 0 20px rgba(255, 0, 255, 0.3) !important;
+            }
+            
+            /* Crypto-Green Styling for sidebar expandable sections - UPDATED */
+            div[data-testid="stExpander"] {
+                background-color: rgba(30, 20, 60, 0.4) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                border-radius: 16px !important;
+                border: 3px solid rgba(0, 255, 245, 0.4) !important; /* Increased from 1px to 3px and more opacity */
+                transition: all 0.3s ease-in-out !important;
+            }
+
+            /* Enhanced hover effect - UPDATED */
+            div[data-testid="stExpander"]:hover {
+                border-color: rgba(0, 255, 245, 0.8) !important; /* Increased opacity */
+                box-shadow: 0 0 30px rgba(0, 255, 245, 0.3) !important; /* Stronger glow */
+                transform: translateY(-2px) !important;
+            }
+            
+            /* Add pulse glow animation - UPDATED */
+            @keyframes pulse-glow {
+                0%, 100% { 
+                    box-shadow: 0 0 8px rgba(0, 255, 245, 0.2); /* Stronger base glow */
+                }
+                50% { 
+                    box-shadow: 0 0 25px rgba(0, 255, 245, 0.4); /* Stronger pulse glow */
+                }
+            }
+            
+            div[data-testid="stExpander"]:hover {
+                animation: pulse-glow 2s infinite ease-in-out;
+            }
+            
+            /* Add extra styling to make expander arrow cyan - NEW */
+            div[data-testid="stExpander"] svg {
+                fill: rgba(0, 255, 245, 0.9) !important; /* Cyan arrow */
+                transition: transform 0.3s ease !important;
+            }
+            
+            div[data-testid="stExpander"][aria-expanded="true"] svg {
+                transform: rotate(180deg) !important; /* Rotate arrow when expanded */
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # AI Banner with improved styling
         st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 10px; margin: 1rem 0 0.5rem 0.5rem;">
-            <span style="color: #00fff5; font-size: 1.1rem; font-weight: 600;">Powered by AI</span>
-            <img src="data:image/png;base64,{brain_base64}" width="26" class="pulse-brain" />
+        <div style="display: flex; align-items: center; gap: 12px; margin: 0.5rem 0 1.5rem 0; 
+                    background: linear-gradient(90deg, rgba(0,255,245,0.1) 0%, rgba(157,78,221,0.1) 100%);
+                    padding: 12px; border-radius: 10px; border: 1px solid rgba(0,255,245,0.2);">
+            <img src="data:image/png;base64,{brain_base64}" width="32" class="pulse-brain" />
+            <div>
+                <div style="color: #00fff5; font-size: 1.2rem; font-weight: 600; margin-bottom: 2px;">AI Trading Assistant</div>
+                <div style="color: #cccccc; font-size: 0.85rem;">Powered by Mariah AI</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Quick Actions Panel
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.markdown("### ⚡ Quick Actions")
+        # Quick Actions Panel - Enhanced
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>⚡ Quick Actions</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📡 Scanner", use_container_width=True, type="secondary"):
-                st.session_state.current_tool = "Signal Scanner"  # ←← This line needed proper indentation
+                st.session_state.current_tool = "Signal Scanner"
         with col2:
             if st.button("📰 News", use_container_width=True, type="secondary"):
                 st.session_state.current_tool = "Crypto News"
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # Quick Execute Panel
-        st.markdown("### 🚀 Quick Execute")
+        # Quick Execute Panel - With Matching Color
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>🚀 Quick Execute</h3>", unsafe_allow_html=True)
         quick_symbol = st.selectbox("Symbol", ["BTCUSDT", "ETHUSDT", "DOGEUSDT", "SOLUSDT"], key="quick_symbol")
 
         col1, col2 = st.columns(2)
@@ -3335,34 +4189,41 @@ def main():
                 st.success(f"Quick BUY {quick_symbol} triggered!")
         with col2:
             if st.button("📉 SELL", use_container_width=True):
-                st.session_state.quick_action = "sell"  # ←← This line needed proper indentation
+                st.session_state.quick_action = "sell"
                 st.session_state.quick_symbol = quick_symbol
                 st.error(f"Quick SELL {quick_symbol} triggered!")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Header Toggle Section
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.markdown("### 👀 Header Control")
-
-        header_status = "Hidden" if st.session_state.get('hide_header', False) else "Visible"
-        status_color = "#ff4d4d" if st.session_state.get('hide_header', False) else "#00d87f"
-
-        st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <span style="color: #ccc;">Header Status:</span>
-            <br>
-            <span style="color: {status_color}; font-weight: bold; font-size: 1.1rem;">{header_status}</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("🔁 Toggle Header", use_container_width=True, type="secondary"):
-            st.session_state.hide_header = not st.session_state.get('hide_header', False)
-            st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Collapsible Tool Groups
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
+        # Settings Section - With Matching Color
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>⚙️ Visual Settings</h3>", unsafe_allow_html=True)
+        
+        # Two visual settings side by side with improved layout
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Header Toggle - Improved layout
+            st.markdown("<div style='font-size: 0.85rem; color: #aaa; margin-bottom: 5px;'>Header</div>", unsafe_allow_html=True)
+            header_status = "Hidden" if st.session_state.get('hide_header', False) else "Visible"
+            st.markdown(f"<div style='font-weight: bold; color: {'#ff4d4d' if st.session_state.get('hide_header', False) else '#00d87f'};'>{header_status}</div>", unsafe_allow_html=True)
+            if st.button("🔄 Toggle", key="toggle_header", use_container_width=True):
+                st.session_state.hide_header = not st.session_state.get('hide_header', False)
+                st.rerun()
+                
+        with col2:
+            # Improved Video Mode layout
+            st.markdown("<div style='font-size: 0.85rem; color: #aaa; margin-bottom: 5px;'>Video Mode</div>", unsafe_allow_html=True)
+            minimal_mode = st.toggle("Video Only", value=st.session_state.minimal_mode, help="Show only background video", label_visibility="collapsed")
+            st.markdown(f"<div style='font-weight: bold; color: {'#00d87f' if st.session_state.minimal_mode else '#aaaaaa'};'>{'On' if st.session_state.minimal_mode else 'Off'}</div>", unsafe_allow_html=True)
+            if minimal_mode != st.session_state.minimal_mode:
+                st.session_state.minimal_mode = minimal_mode
+                st.rerun()
+                
+        # RESTORE: Collapsible Tool Groups with expanders with crypto-green borders
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>🔧 Tools & Analysis</h3>", unsafe_allow_html=True)
+        
+        # RESTORE: Original expanders instead of tabs
         with st.expander("📊 Analytics Tools", expanded=False):
             analytics_tool = st.radio(
                 "Choose Analytics:",
@@ -3380,25 +4241,135 @@ def main():
             )
             if st.button("Open Data Tool", use_container_width=True):
                 st.session_state.current_tool = data_tool
-        st.markdown('</div>', unsafe_allow_html=True)
         
-        # Dashboard Controls
-        st.markdown('<div class="blur-card">', unsafe_allow_html=True)
-        st.title("📊 Dashboard Controls")
+        # Trading Controls - Enhanced
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>📊 Dashboard Controls</h3>", unsafe_allow_html=True)
+        
+        # Strategy Mode - SIMPLIFIED IMPLEMENTATION WITH MOMENTUM NEXT TO SWING
+        st.markdown("<div style='font-size: 0.9rem; margin: 10px 0 10px 0;'>⚙️ Strategy Mode</div>", unsafe_allow_html=True)
+
+        # Store the current mode (or default to Swing)
+        if "strategy_mode_selector" not in st.session_state:
+            st.session_state.strategy_mode_selector = "Swing"
+
+        # Create a wider layout with more space for text
+        st.markdown("""
+        <style>
+            /* Force elements to stay on a single line without wrapping */
+            div[data-testid="stHorizontalBlock"] .element-container {
+                white-space: nowrap;
+                min-width: 110px;
+                margin-right: 0px !important;
+            }
+            
+            /* Make checkboxes more compact */
+            .stCheckbox {
+                padding-left: 0px !important;
+                margin-left: 0px !important;
+            }
+            
+            /* Adjust spacing inside checkboxes */
+            .stCheckbox > label {
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+            
+            /* Give priority to checkbox text */
+            .stCheckbox > label > div:last-child {
+                font-size: 15px !important;
+                margin-left: 5px !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Give more space between columns
+        st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+        
+        # Create custom container with wide strategy options
+        scalping_col, swing_col, momentum_col = st.columns([1.1, 0.9, 1.3])  # Adjusted column ratios
+        
+        with scalping_col:
+            scalping = st.checkbox("Scalping", value=st.session_state.strategy_mode_selector == "Scalping", key="scalping_checkbox", label_visibility="visible")
+            if scalping and st.session_state.strategy_mode_selector != "Scalping":
+                st.session_state.strategy_mode_selector = "Scalping"
+                st.rerun()
+                
+        with swing_col:
+            swing = st.checkbox("Swing", value=st.session_state.strategy_mode_selector == "Swing", key="swing_checkbox", label_visibility="visible") 
+            if swing and st.session_state.strategy_mode_selector != "Swing":
+                st.session_state.strategy_mode_selector = "Swing"
+                st.rerun()
+                
+        with momentum_col:
+            momentum = st.checkbox("Momentum", value=st.session_state.strategy_mode_selector == "Momentum", key="momentum_checkbox", label_visibility="visible")
+            if momentum and st.session_state.strategy_mode_selector != "Momentum":
+                st.session_state.strategy_mode_selector = "Momentum"
+                st.rerun()
+        
+        # Add some space after checkboxes
+        st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+
+        # Get the current mode
+        mode = st.session_state.strategy_mode_selector
+
+        # Mode colors
+        mode_colors = {
+            "Scalping": "#00ffcc",
+            "Swing": "#ffaa00",
+            "Momentum": "#ff4d4d"
+        }
+
+        # Visual indicators - all three in one row at the bottom
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; margin-top: 10px;">
+            <div style="text-align: center; padding: 8px; background-color: rgba(0,255,204,{0.3 if mode=='Scalping' else 0.1}); 
+                        border-radius: 5px; flex: 1; margin-right: 5px; border: 1px solid rgba(0,255,204,{0.6 if mode=='Scalping' else 0.1});">
+                <div style="font-weight: {700 if mode=='Scalping' else 400}; color: #00ffcc;">Scalping</div>
+            </div>
+            <div style="text-align: center; padding: 8px; background-color: rgba(255,170,0,{0.3 if mode=='Swing' else 0.1}); 
+                        border-radius: 5px; flex: 1; margin-right: 5px; border: 1px solid rgba(255,170,0,{0.6 if mode=='Swing' else 0.1});">
+                <div style="font-weight: {700 if mode=='Swing' else 400}; color: #ffaa00;">Swing</div>
+            </div>
+            <div style="text-align: center; padding: 8px; background-color: rgba(255,77,77,{0.3 if mode=='Momentum' else 0.1}); 
+                        border-radius: 5px; flex: 1; border: 1px solid rgba(255,77,77,{0.6 if mode=='Momentum' else 0.1});">
+                <div style="font-weight: {700 if mode=='Momentum' else 400}; color: #ff4d4d;">Momentum</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Voice Settings
-        st.markdown("### 🎤 Voice Settings")
+        st.markdown("<div style='font-size: 0.9rem; margin: 10px 0 5px 0;'>🎤 Voice Settings</div>", unsafe_allow_html=True)
         st.session_state["mute_mariah"] = st.checkbox(
             "🔇 Mute Mariah's Voice",
             value=st.session_state.get("mute_mariah", False)
         )
         
-        # Auto-Refresh
+        # Risk Override
+        st.markdown("<div style='font-size: 0.9rem; margin: 10px 0 5px 0;'>🛡️ Risk Override</div>", unsafe_allow_html=True)
+        st.session_state["override_risk_lock"] = st.checkbox(
+            "🚨 Override Mariah's Risk Lock",
+            value=st.session_state.get("override_risk_lock", False),
+            help="⚠️ Not recommended: Allows trading even after daily loss limit is reached"
+        )
+
+        # Warning message when risk override is active
+        if st.session_state.get("override_risk_lock"):
+            st.warning("⚠️ Risk override is ACTIVE - Use with extreme caution!")
+        
+        # Auto-Refresh - FIXED to use original selectbox
+        st.markdown("<div style='font-size: 0.9rem; margin: 10px 0 5px 0;'>🔄 Auto-Refresh</div>", unsafe_allow_html=True)
+        
+        # Use the original selectbox that was working
         refresh_choice = st.selectbox(
             "🔁 Auto-Refresh Interval",
             options=["Every 10 sec", "Every 30 sec", "Every 1 min", "Every 5 min"],
             index=1,
-            key="refresh_interval_selector_unique"
+            key="refresh_interval_selector_unique",
+            label_visibility="collapsed"
         )
         
         refresh_map = {
@@ -3409,34 +4380,67 @@ def main():
         }
         
         refresh_interval = refresh_map[refresh_choice]
+        
+        # Use st_autorefresh directly as in the original code
         st_autorefresh(interval=refresh_interval, key="auto_refresh_unique")
         
-        # Strategy Mode
-        st.markdown("### ⚙️ Strategy Mode")
-        mode = st.radio(
-            "Choose a Strategy Mode:",
-            ["Scalping", "Swing", "Momentum"],
-            index=1,
-            key="strategy_mode_selector"
-        )
+        # Position Sizing Calculator - FIXED LAYOUT with pink borders
+        st.markdown("<div style='font-size: 1rem; margin: 15px 0 10px 0; color: #00fff5;'>📏 Position Sizing</div>", unsafe_allow_html=True)
         
-        # Position Sizing
-        st.markdown("## 📏 Position Sizing")
-        account_balance = st.number_input("Account Balance ($)", value=5000.0)
-        risk_percent = st.slider("Risk % Per Trade", min_value=0.5, max_value=5.0, value=2.0)
-        st.session_state["risk_percent"] = risk_percent  # Store in session state
-        entry_price_sidebar = st.number_input("Entry Price", value=0.0, format="%.2f")
-        stop_loss_sidebar = st.number_input("Stop Loss Price", value=0.0, format="%.2f")
+        # Initialize qty_calc in session state if not present
+        if "qty_calc" not in st.session_state:
+            st.session_state.qty_calc = 0.001
         
+        # Account balance and risk - IMPROVED LAYOUT
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("<div style='font-size: 0.8rem; color: #aaa; margin-bottom: 5px;'>Account Balance</div>", unsafe_allow_html=True)
+            account_balance = st.number_input("Account Balance ($)", value=5000.0, min_value=100.0, step=100.0, label_visibility="collapsed")
+            
+        with col2:
+            st.markdown("<div style='font-size: 0.8rem; color: #aaa; margin-bottom: 5px;'>Risk %</div>", unsafe_allow_html=True)
+            risk_percent = st.slider("Risk %", min_value=0.5, max_value=5.0, value=2.0, step=0.5, label_visibility="collapsed")
+        
+        st.session_state["risk_percent"] = risk_percent
+        
+        # Entry and SL - IMPROVED LAYOUT
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("<div style='font-size: 0.8rem; color: #aaa; margin-bottom: 5px;'>Entry Price</div>", unsafe_allow_html=True)
+            entry_price_sidebar = st.number_input("Entry", value=0.0, format="%.2f", step=1.0, label_visibility="collapsed")
+            
+        with col2:
+            st.markdown("<div style='font-size: 0.8rem; color: #aaa; margin-bottom: 5px;'>Stop Loss</div>", unsafe_allow_html=True)
+            stop_loss_sidebar = st.number_input("Stop", value=0.0, format="%.2f", step=1.0, label_visibility="collapsed")
+        
+        # Calculate position - IMPROVED STYLING
         if entry_price_sidebar > 0 and stop_loss_sidebar > 0 and entry_price_sidebar != stop_loss_sidebar:
-            qty_calc = position_size_from_risk(account_balance, risk_percent, entry_price_sidebar, stop_loss_sidebar)
-            st.success(f"📊 Suggested Quantity: {qty_calc}")
+            calculated_qty = position_size_from_risk(account_balance, risk_percent, entry_price_sidebar, stop_loss_sidebar)
+            # Store the calculated value in session state
+            st.session_state.qty_calc = calculated_qty
+            
+            st.markdown(f"""
+            <div style="text-align: center; margin-top: 15px; background-color: rgba(0,216,127,0.2); 
+                        padding: 12px; border-radius: 10px; border: 1px solid rgba(0,216,127,0.3);">
+                <div style="font-size: 0.9rem; color: #aaa;">Suggested Quantity</div>
+                <div style="font-size: 1.4rem; font-weight: bold; color: #00d87f;">{calculated_qty}</div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            qty_calc = 0
-            st.info("Enter valid entry and stop-loss.")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="text-align: center; margin-top: 15px; background-color: rgba(100,100,150,0.3); 
+                        padding: 12px; border-radius: 10px; border: 1px solid rgba(100,100,150,0.4);">
+                <div style="font-size: 0.9rem; color: #ddd;">Enter valid entry and stop-loss prices</div>
+            </div>
+            """, unsafe_allow_html=True)
     
+        # System Status - With Matching Color
+        st.markdown('<div class="blur-card" style="border: 1px solid rgba(0,255,245,0.3); margin-bottom: 16px;">', unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-bottom: 15px; color: #00fff5; font-size: 1.1rem;'>🖥️ System Status</h3>", unsafe_allow_html=True)
+        
+        # RESTORE: Use the original feature display method
+        features.display_sidebar_status()
+        
     # Load data
     sl_log = st.empty()  # Log area for SL updates
     df_open_positions = load_open_positions(session)
@@ -3444,38 +4448,44 @@ def main():
     df_manual_closed = load_closed_manual_trades(session)
     df_trades = load_trades()
     df_bot_open, df_bot_closed = split_bot_trades(df_trades)
-    
+
     # Ensure columns exist
     if "Realized PnL ($)" not in df_manual_closed.columns:
         df_manual_closed["Realized PnL ($)"] = 0
     if "Realized PnL ($)" not in df_bot_closed.columns:
         df_bot_closed["Realized PnL ($)"] = 0
-    
+
     # Calculate PnL
     open_pnl = df_open_positions["PnL ($)"].sum() if not df_open_positions.empty else 0
     closed_pnl = df_bot_closed["Realized PnL ($)"].sum() + df_manual_closed["Realized PnL ($)"].sum()
     total_pnl = open_pnl + closed_pnl
-    
+
     # Calculate additional metrics
     total_positions = len(df_open_positions) if not df_open_positions.empty else 0
     risk_locked = check_max_daily_loss(df_bot_closed, df_manual_closed)
-    
+
     # Mode colors
     mode_colors = {
         "Scalping": "#00ffcc",
         "Swing": "#ffaa00",
         "Momentum": "#ff4d4d"
     }
-    
+
     # Check scanner status
     scanner_active = True  # You can set this based on your scanner settings
-    
+
     # =======================
     # STATUS HEADER
     # =======================
     current_time = datetime.now()
     st.markdown(f"""
-    <div class="blur-card" style="padding: 8px; margin-bottom: 1rem;">
+    <div style="padding: 8px; margin-bottom: 1rem;
+                background-color: rgba(30, 20, 60, 0.6);
+                border-radius: 16px;
+                border: 2px solid #00fff5;
+                box-shadow: 0 0 15px rgba(0, 255, 245, 0.3), 0 0 30px rgba(0, 255, 245, 0.1);
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease-in-out;">
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
             <div style="color: #00fff5;">🕐 {current_time.strftime("%H:%M:%S")}</div>
             <div>📅 {current_time.strftime("%B %d, %Y")}</div>
@@ -3723,8 +4733,6 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown('</div>', unsafe_allow_html=True) 
-
     # Risk Banner
     if risk_locked and not st.session_state.get("override_risk_lock"):
         mariah_speak("Warning. Mariah is pausing trades due to risk limit.")
@@ -3737,14 +4745,151 @@ def main():
     
     # Override Banner
     if st.session_state.get("override_risk_lock"):
-        st.markdown("""
-        <div class="override-glow" style="background-color: rgba(0, 255, 245, 0.15); padding: 1rem;
-        border-left: 6px solid #00fff5; border-radius: 8px;">
-            <h4 style="color: #00fff5;">✅ Override Active</h4>
-            <p style="color: #ccffff;">Mariah is trading today even though the risk lock was triggered. Use with caution. 😈</p>
+        import streamlit.components.v1 as components
+        
+        components.html("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+        @keyframes siren-flash {
+            0%, 100% { 
+                opacity: 1;
+                text-shadow: 0 0 5px #ff4d4d;
+            }
+            50% { 
+                opacity: 0.3;
+                text-shadow: 0 0 20px #ff4d4d, 0 0 30px #ff0000;
+            }
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px #ff4d4d, 0 0 10px #ff4d4d;
+            }
+            50% { 
+                box-shadow: 0 0 20px #ff4d4d, 0 0 30px #ff0000, 0 0 40px #ff0000;
+            }
+        }
+        
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        @keyframes corner-glow {
+            0%, 100% { 
+                border-color: #ff4d4d;
+                box-shadow: 0 0 5px #ff4d4d;
+            }
+            50% { 
+                border-color: #ffffff;
+                box-shadow: 0 0 15px #ff4d4d;
+            }
+        }
+        
+        .banner-container {
+            position: relative;
+            background: linear-gradient(45deg, #ff4d4d, #ff0000);
+            border: 3px solid #ff4d4d;
+            border-radius: 10px;
+            padding: 3px;
+            animation: glow-pulse 2s ease-in-out infinite;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .glass-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ff4d4d, #fff, #ff4d4d, transparent);
+            animation: scan 3s linear infinite;
+            box-shadow: 0 0 10px #ff4d4d;
+        }
+        
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ff4d4d;
+            animation: corner-glow 2s ease-in-out infinite;
+        }
+        
+        .corner-tl { top: 8px; left: 8px; border-bottom: none; border-right: none; animation-delay: 0s; }
+        .corner-tr { top: 8px; right: 8px; border-bottom: none; border-left: none; animation-delay: 0.5s; }
+        .corner-bl { bottom: 8px; left: 8px; border-top: none; border-right: none; animation-delay: 1s; }
+        .corner-br { bottom: 8px; right: 8px; border-top: none; border-left: none; animation-delay: 1.5s; }
+        
+        .title {
+            color: white;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 0 0 10px #ff4d4d;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .subtitle {
+            color: #ffcccc;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            margin: 10px 0;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .message {
+            color: #ffe5e5;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 0;
+            position: relative;
+            z-index: 10;
+        }
+        </style>
+        </head>
+        <body>
+        <div class="banner-container">
+            <div class="glass-panel">
+                <div class="scan-line"></div>
+                <div class="corner corner-tl"></div>
+                <div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div>
+                <div class="corner corner-br"></div>
+                
+                <div class="title">
+                    <span style="animation: siren-flash 0.8s ease-in-out infinite;">🚨</span> 
+                    RISK OVERRIDE ACTIVE 
+                    <span style="animation: siren-flash 0.8s ease-in-out infinite 0.4s;">🚨</span>
+                </div>
+                <div class="subtitle">WARNING: Trading Beyond Safety Limits</div>
+                <div class="message">Mariah is proceeding despite risk warnings. Extreme caution advised!</div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-    
+        </body>
+        </html>
+        """, height=180)
+            
     # Log daily stats
     log_daily_pnl_split(df_bot_closed, df_manual_closed)
     
@@ -3817,8 +4962,8 @@ def main():
         "🤖 Bot Trading",
         "👤 Manual Trading",
         "📈 Analytics & Charts",
-        "🚀 Execute & AI"
-        "🔥 AI Agents"  # Add this new tab
+        "🚀 Execute & AI",     
+        "🔥 AI Agents"       
     ]
     
     # Handle selected tool from sidebar
@@ -3832,7 +4977,7 @@ def main():
         elif st.session_state.current_tool == "Crypto News":
             st.session_state.active_tab_index = 3  # Analytics tab
     
-    tab1, tab2, tab3, tab4, tab5, = st.tabs(main_tabs)
+    tab1, tab2, tab3, tab4, tab5, tab6, = st.tabs(main_tabs)
     
     # =======================
     # TAB 1: TRADING OVERVIEW
@@ -3987,8 +5132,6 @@ def main():
             else:
                 st.info("No trades today to chart")
         
-        st.markdown('</div>', unsafe_allow_html=True)
-    
     # =======================
     # TAB 2: BOT TRADING
     # =======================
@@ -4080,9 +5223,7 @@ def main():
                 st.write(f"**Risk Locked**: {'Yes' if risk_locked else 'No'}")
                 st.write(f"**Override Active**: {'Yes' if st.session_state.get('override_risk_lock') else 'No'}")
                 st.write(f"**Daily PnL**: ${today_bot_pnl:.2f}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
+          
     # =======================
     # TAB 3: MANUAL TRADING
     # =======================
@@ -4253,8 +5394,6 @@ def main():
                            color_discrete_map={"Bot": "#00fff5", "Manual": "#ffaa00"})
                 st.plotly_chart(fig, use_container_width=True)
         
-        st.markdown('</div>', unsafe_allow_html=True)
-    
     # =======================
     # TAB 4: ANALYTICS & CHARTS
     # =======================
@@ -4386,8 +5525,6 @@ def main():
             # Default view when no tool is selected
             st.info("Select an analytics tool from the sidebar or tabs above.")
         
-        st.markdown('</div>', unsafe_allow_html=True)
-    
     # =======================
     # TAB 5: EXECUTE & AI
     # =======================
@@ -4404,7 +5541,9 @@ def main():
             with col1:
                 symbol = st.selectbox("Symbol", ["BTCUSDT", "ETHUSDT", "DOGEUSDT", "SOLUSDT", "XRPUSDT"])
                 side = st.selectbox("Side", ["Buy", "Sell"])
-                qty = st.number_input("Quantity", min_value=0.001, value=max(0.001, float(qty_calc)), step=0.001, format="%.3f")
+                qty = st.number_input("Quantity", min_value=0.001, 
+                                    value=max(0.001, float(st.session_state.get('qty_calc', 0.001))), 
+                                    step=0.001, format="%.3f")              
             
             with col2:
                 # Show current price and calculated values
@@ -4458,8 +5597,6 @@ def main():
                     mariah_speak("Order failed. Check trade parameters.")
                     st.error(f"❌ Order failed: {e}")
             
-            st.markdown('</div>', unsafe_allow_html=True)
-        
         with execute_tabs[1]:
             # Mariah AI
             st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -4507,8 +5644,6 @@ def main():
                     st.chat_message("assistant").markdown(response)
                     mariah_speak(response)
             
-            st.markdown('</div>', unsafe_allow_html=True)
-        
         with execute_tabs[2]:
             # Quick Actions
             st.markdown('<div class="blur-card">', unsafe_allow_html=True)
@@ -4567,12 +5702,10 @@ def main():
                     if st.button("⚠️ CONFIRM PAUSE", use_container_width=True):
                         st.error("Pause bots function would execute here.")
             
-            st.markdown('</div>', unsafe_allow_html=True)
-
     # =======================
-    # TAB 5: AI AGENTS
+    # TAB 6: AI AGENTS
     # =======================
-    with tab5:
+    with tab6:
         render_ai_agents_tab()        
     
     # =======================
