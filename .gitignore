@@ -1,1 +1,19 @@
+# Python virtual environments
+env/
 venv/
+*.pyc
+__pycache__/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.dbvenv/
