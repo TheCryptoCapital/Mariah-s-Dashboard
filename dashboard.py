@@ -27,6 +27,22 @@ import warnings
 warnings.filterwarnings("ignore", message="Could not infer format")
 
 # =======================
+# PERFORMANCE PROFILING
+# =======================
+import time
+import functools
+
+def timing_decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"{func.__name__} took {execution_time:.2f} seconds to execute")
+        return result
+    return wrapper
+# =======================
 # CORE IMPORTS (Always Required)
 # =======================
 import pandas as pd
@@ -98,6 +114,12 @@ try:
     from sklearn.preprocessing import StandardScaler
 except ImportError:
     joblib = RandomForestClassifier = StandardScaler = None
+
+# Performance monitoring
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 # Local module imports with error handling
 try:
@@ -986,6 +1008,69 @@ class MariahLevel2:
 # =======================
 # UTILITY FUNCTIONS
 # =======================
+def get_memory_usage():
+    """Get current memory usage of the process."""
+    try:
+        import psutil
+        process = psutil.Process()
+        return process.memory_info().rss / (1024 * 1024)  # Convert to MB
+    except ImportError:
+        # Fallback if psutil is not available
+        return 0.0
+
+def render_historical_trades(df_trades, max_initial=50, key="default"):
+    """Render historical trades with progressive loading."""
+    
+    # Use a unique key for each instance of this function
+    state_key = f"loaded_trades_count_{key}"
+    
+    # Initialize loaded count in session state if not present
+    if state_key not in st.session_state:
+        st.session_state[state_key] = max_initial
+    
+    # Show trades based on current loaded count
+    st.dataframe(df_trades.head(st.session_state[state_key]), use_container_width=True)
+    
+    # Show load more button if there are more trades
+    if len(df_trades) > st.session_state[state_key]:
+        if st.button("Load More Trades", key=f"load_more_{key}"):
+            # Increase count by max_initial more
+            st.session_state[state_key] += max_initial
+            st.rerun()
+
+def show_performance_dashboard():
+    """Display dashboard performance metrics."""
+    st.subheader("⚡ Performance Metrics")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Calculate page load time
+        if "page_load_start" not in st.session_state:
+            st.session_state.page_load_start = time.time()
+            
+        load_time = time.time() - st.session_state.page_load_start
+        st.metric("Page Load Time", f"{load_time:.2f}s")
+        
+        # Count API calls
+        if "api_call_count" not in st.session_state:
+            st.session_state.api_call_count = 0
+            
+        st.metric("API Calls", st.session_state.api_call_count)
+    
+    with col2:
+        # Cache hit rate
+        if "cache_hits" not in st.session_state:
+            st.session_state.cache_hits = 0
+        if "cache_misses" not in st.session_state:
+            st.session_state.cache_misses = 0
+            
+        total_cache_requests = st.session_state.cache_hits + st.session_state.cache_misses
+        hit_rate = (st.session_state.cache_hits / total_cache_requests * 100) if total_cache_requests > 0 else 0
+        
+        st.metric("Cache Hit Rate", f"{hit_rate:.1f}%")
+        st.metric("Memory Usage", f"{get_memory_usage():.1f} MB")
+
 def set_video_background(video_path):
     """Set a video as the dashboard background using base64 encoding."""
     try:
@@ -1606,8 +1691,9 @@ def log_rsi_trade_to_csv(symbol, side, qty, entry_price, mode="Swing"):
     except Exception as e:
         st.error(f"❌ Failed to log trade: {e}")
 
+@st.cache_data(ttl=lambda interval: 60 if interval in ["1", "5"] else 300)
 def get_historical_data(session, symbol, interval, limit=100):
-    """Get historical kline data for ML processing."""
+    """Get historical kline data with smart cache invalidation."""
     try:
         res = session.get_kline(
             category="linear",
@@ -1638,8 +1724,9 @@ def get_historical_data(session, symbol, interval, limit=100):
 # =======================
 # TRADE DATA FUNCTIONS
 # =======================
+@st.cache_data(ttl=30)
 def load_open_positions(session):
-    """Load open positions from Bybit API."""
+    """Load open positions from Bybit API with caching."""
     try:
         res = session.get_positions(
             category="linear",
@@ -1672,6 +1759,8 @@ def load_open_positions(session):
     except Exception as e:
         st.error(f"❌ Failed to load open positions: {e}")
         return pd.DataFrame()
+
+
 
 def load_trades():
     """Load trades from CSV file."""
@@ -3092,24 +3181,34 @@ def render_filter_by_date():
             
             # Display trades
             st.subheader("📋 Filtered Trades")
-            
+
             # Create display dataframe
             display_columns = ["timestamp", "symbol", "side", "qty", "entry_price",
-                             "stop_loss", "take_profit", "note", "Realized PnL ($)",
-                             "Realized PnL (%)", "trade_type"]
-            
+                            "stop_loss", "take_profit", "note", "Realized PnL ($)",
+                            "Realized PnL (%)", "trade_type"]
+
             # Ensure all columns exist
             for col in display_columns:
                 if col not in df_filtered.columns:
                     df_filtered[col] = 0 if "PnL" in col else ""
-            
+
             display_df = df_filtered[display_columns].copy()
-            
+
             # Sort by timestamp
             display_df = display_df.sort_values("timestamp", ascending=False)
-            
-            st.dataframe(display_df)
-            
+
+            # If only bot trades are selected
+            if "Bot Trades" in trade_types and "Manual Trades" not in trade_types:
+                key = "filtered_bot_trades"
+            # If only manual trades are selected
+            elif "Manual Trades" in trade_types and "Bot Trades" not in trade_types:
+                key = "filtered_manual_trades"
+            # If both are selected
+            else:
+                key = "filtered_all_trades"
+                
+            render_historical_trades(display_df, max_initial=50, key="manual_trades")
+
             # Create visualization
             st.subheader("📈 PnL Over Time")
             
@@ -3702,6 +3801,291 @@ def render_signal_scanner(mode, account_balance, df_bot_closed, df_manual_closed
             "🚨 Manually override Mariah's risk lock (not recommended)",
             value=st.session_state.get("override_risk_lock", False)
         )
+
+# =======================
+# MARKET SCANNER FUNCTIONS
+# =======================
+def render_market_scanner():
+    """Render the market scanner with optimized loading."""
+    
+    # First show lightweight overview
+    st.subheader("📡 Market Scanner")
+    
+    # Let user choose which analysis to run
+    selected_analyses = st.multiselect(
+        "Select Analysis Components to Run:",
+        ["RSI/MACD", "ML Signal", "Sentiment", "On-Chain", "Enhanced Multi-Indicator"],
+        default=["RSI/MACD"]
+    )
+    
+    # Only run selected analyses
+    if "RSI/MACD" in selected_analyses:
+        with st.spinner("Running RSI/MACD analysis..."):
+            render_rsi_macd_analysis()
+    
+    if "ML Signal" in selected_analyses:
+        with st.spinner("Running ML Signal analysis..."):
+            render_ml_signal_analysis()
+    
+    # Add implementations for the remaining analyses
+    if "Sentiment" in selected_analyses:
+        with st.spinner("Running Sentiment analysis..."):
+            # Implement sentiment analysis or call existing function
+            st.info("Sentiment analysis module - To be implemented")
+    
+    if "On-Chain" in selected_analyses:
+        with st.spinner("Running On-Chain analysis..."):
+            # Implement on-chain analysis or call existing function
+            st.info("On-Chain analysis module - To be implemented")
+            
+    if "Enhanced Multi-Indicator" in selected_analyses:
+        with st.spinner("Running Enhanced Multi-Indicator analysis..."):
+            # Implement enhanced multi-indicator analysis or call existing function
+            st.info("Enhanced Multi-Indicator analysis module - To be implemented")
+
+def render_rsi_macd_analysis():
+    """Display RSI and MACD analysis for selected symbols."""
+    st.markdown("### 📊 RSI & MACD Analysis")
+    
+    # Let user select symbols
+    symbols = st.multiselect(
+        "Select symbols to analyze:",
+        ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"],
+        default=["BTCUSDT"]
+    )
+    
+    # Let user select timeframe
+    interval = st.selectbox(
+        "Select timeframe:",
+        ["5", "15", "30", "60", "240"],
+        index=1  # Default to 15m
+    )
+    
+    # Analyze each selected symbol
+    for symbol in symbols:
+        with st.expander(f"{symbol} RSI/MACD Analysis", expanded=True):
+            try:
+                # Get historical data
+                historical_data = get_historical_data(session, symbol, interval, limit=100)
+                
+                if historical_data.empty:
+                    st.warning(f"No data available for {symbol}")
+                    continue
+                
+                # Calculate RSI
+                historical_data["RSI"] = ta.rsi(historical_data["close"], length=14)
+                
+                # Calculate MACD
+                macd_data = ta.macd(historical_data["close"])
+                historical_data["MACD"] = macd_data[f"MACD_12_26_9"]
+                historical_data["Signal"] = macd_data[f"MACDs_12_26_9"]
+                historical_data["Histogram"] = macd_data[f"MACDh_12_26_9"]
+                
+                # Display current values
+                current_rsi = historical_data["RSI"].iloc[-1]
+                current_macd = historical_data["MACD"].iloc[-1]
+                current_signal = historical_data["Signal"].iloc[-1]
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    # RSI indicator
+                    if current_rsi < 30:
+                        st.metric("RSI (14)", f"{current_rsi:.2f}", "Oversold", delta_color="inverse")
+                    elif current_rsi > 70:
+                        st.metric("RSI (14)", f"{current_rsi:.2f}", "Overbought")
+                    else:
+                        st.metric("RSI (14)", f"{current_rsi:.2f}", "Neutral")
+                
+                with col2:
+                    # MACD indicator
+                    macd_status = "Bullish" if current_macd > current_signal else "Bearish"
+                    delta = current_macd - current_signal
+                    st.metric("MACD", f"{current_macd:.4f}", f"{macd_status} ({delta:.4f})", 
+                              delta_color="normal" if macd_status == "Bullish" else "inverse")
+                
+                with col3:
+                    # Price info
+                    current_price = historical_data["close"].iloc[-1]
+                    prev_price = historical_data["close"].iloc[-2]
+                    price_change = ((current_price - prev_price) / prev_price) * 100
+                    st.metric("Price", f"${current_price:.2f}", f"{price_change:.2f}%",
+                             delta_color="normal" if price_change >= 0 else "inverse")
+                
+                # Plot combined chart
+                fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                                   row_heights=[0.7, 0.3],
+                                   subplot_titles=("Price", "RSI"))
+                
+                # Price candlestick
+                fig.add_trace(
+                    go.Candlestick(
+                        x=historical_data["timestamp"],
+                        open=historical_data["open"],
+                        high=historical_data["high"],
+                        low=historical_data["low"],
+                        close=historical_data["close"],
+                        name="Price"
+                    ),
+                    row=1, col=1
+                )
+                
+                # RSI
+                fig.add_trace(
+                    go.Scatter(
+                        x=historical_data["timestamp"],
+                        y=historical_data["RSI"],
+                        name="RSI",
+                        line=dict(color="#00fff5", width=2)
+                    ),
+                    row=2, col=1
+                )
+                
+                # Add RSI overbought/oversold lines
+                fig.add_hline(y=70, line_dash="dash", line_color="red", row=2, col=1)
+                fig.add_hline(y=30, line_dash="dash", line_color="green", row=2, col=1)
+                
+                fig.update_layout(xaxis_rangeslider_visible=False, height=600)
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Display signal
+                if current_rsi < 30 and current_macd > current_signal:
+                    st.success("🟢 Strong Buy Signal: RSI oversold with bullish MACD")
+                elif current_rsi > 70 and current_macd < current_signal:
+                    st.error("🔴 Strong Sell Signal: RSI overbought with bearish MACD")
+                elif current_rsi < 30:
+                    st.info("🟡 Potential Buy: RSI indicates oversold")
+                elif current_rsi > 70:
+                    st.info("🟡 Potential Sell: RSI indicates overbought")
+                elif current_macd > current_signal:
+                    st.info("🟡 MACD indicates bullish momentum")
+                elif current_macd < current_signal:
+                    st.info("🟡 MACD indicates bearish momentum")
+                else:
+                    st.info("⚪ No clear signal at this time")
+                
+            except Exception as e:
+                st.error(f"Error analyzing {symbol}: {e}")
+                import traceback
+                st.code(traceback.format_exc())
+
+def render_ml_signal_analysis():
+    """Display machine learning signal analysis for selected symbols."""
+    st.markdown("### 🤖 ML Signal Analysis")
+    
+    # Let user select symbols
+    symbols = st.multiselect(
+        "Select symbols for ML analysis:",
+        ["BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT", "XRPUSDT"],
+        default=["BTCUSDT"]
+    )
+    
+    # Check if ML is available
+    if not SKLEARN_AVAILABLE or not JOBLIB_AVAILABLE:
+        st.warning("⚠️ ML analysis requires scikit-learn and joblib packages. Please install them to use this feature.")
+        return
+    
+    # Let user select timeframe
+    interval = st.selectbox(
+        "Select timeframe for ML analysis:",
+        ["5", "15", "30", "60", "240"],
+        index=1  # Default to 15m
+    )
+    
+    # Initialize ML Signal Generator
+    ml_generator = MLSignalGenerator()
+    
+    # Analyze each selected symbol
+    for symbol in symbols:
+        with st.expander(f"{symbol} ML Analysis", expanded=True):
+            try:
+                # Get historical data
+                historical_data = get_historical_data(session, symbol, interval, limit=100)
+                
+                if historical_data.empty:
+                    st.warning(f"No data available for {symbol}")
+                    continue
+                
+                # Get ML signal
+                signal, confidence = ml_generator.get_signal(historical_data)
+                
+                # Display result with appropriate styling
+                if signal == "buy":
+                    signal_color = "green"
+                    signal_icon = "🟢"
+                elif signal == "sell":
+                    signal_color = "red" 
+                    signal_icon = "🔴"
+                else:
+                    signal_color = "gray"
+                    signal_icon = "⚪"
+                
+                st.markdown(f"""
+                <div style="background-color: rgba({signal_color=='green' and '0,216,127' or signal_color=='red' and '255,77,77' or '100,100,100'}, 0.2); 
+                            padding: 20px; border-radius: 10px; text-align: center; margin: 10px 0;">
+                    <h2 style="margin: 0; color: {signal_color=='green' and '#00d87f' or signal_color=='red' and '#ff4d4d' or '#aaaaaa'};">
+                        {signal_icon} ML Signal: {signal.upper()}
+                    </h2>
+                    <div style="font-size: 1.5rem; margin: 10px 0;">
+                        Confidence: {confidence:.1%}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Display feature importance if available
+                if hasattr(ml_generator.model, 'feature_importances_'):
+                    st.subheader("Feature Importance")
+                    
+                    # Create mock feature names if real ones aren't available
+                    features = [
+                        "RSI", "MACD", "BB_Width", "Volume_Change", 
+                        "Distance_MA50", "Higher_High", "Lower_Low", "Volatility"
+                    ]
+                    
+                    # Get feature importances
+                    importances = ml_generator.model.feature_importances_
+                    
+                    # Limit to actual number of features
+                    n_features = min(len(features), len(importances))
+                    features = features[:n_features]
+                    importances = importances[:n_features]
+                    
+                    # Create feature importance chart
+                    feature_df = pd.DataFrame({
+                        'Feature': features,
+                        'Importance': importances
+                    }).sort_values('Importance', ascending=False)
+                    
+                    fig = px.bar(
+                        feature_df, 
+                        x='Importance', 
+                        y='Feature',
+                        orientation='h',
+                        color='Importance',
+                        color_continuous_scale=['blue', 'cyan', '#00fff5']
+                    )
+                    
+                    fig.update_layout(height=400)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                # Display training option
+                if st.button(f"Train Model for {symbol}", key=f"train_ml_{symbol}"):
+                    with st.spinner("Training ML model..."):
+                        # Get more historical data for training
+                        training_data = get_historical_data(session, symbol, interval, limit=500)
+                        if not training_data.empty:
+                            accuracy = ml_generator.train_model(training_data)
+                            if accuracy:
+                                st.success(f"✅ Model trained with accuracy: {accuracy:.2f}")
+                            else:
+                                st.error("❌ Training failed. Check logs for details.")
+                        else:
+                            st.error("❌ Not enough historical data for training")
+                            
+            except Exception as e:
+                st.error(f"Error in ML analysis for {symbol}: {e}")
+                import traceback
+                st.code(traceback.format_exc())
 
 # =======================
 # AI AGENTS TAB FUNCTION
@@ -4445,6 +4829,10 @@ def main():
         # RESTORE: Use the original feature display method
         features.display_sidebar_status()
         
+        # Add Performance Metrics expander
+        with st.sidebar.expander("⚡ Performance Metrics", expanded=False):
+            show_performance_dashboard()
+        
     # Load data
     sl_log = st.empty()  # Log area for SL updates
     df_open_positions = load_open_positions(session)
@@ -5183,7 +5571,9 @@ def main():
                 if "timestamp" in display_df.columns:
                     display_df["timestamp"] = pd.to_datetime(display_df["timestamp"], errors='coerce')
                     display_df = display_df.sort_values("timestamp", ascending=False)
-                st.dataframe(display_df.head(50), use_container_width=True)
+                
+                # Use the new render_historical_trades function instead of simple dataframe display
+                render_historical_trades(display_df, max_initial=50, key="bot_trades")
                 
                 # Bot performance metrics
                 st.subheader("📊 Bot Performance Metrics")
@@ -5227,7 +5617,7 @@ def main():
                 st.write(f"**Risk Locked**: {'Yes' if risk_locked else 'No'}")
                 st.write(f"**Override Active**: {'Yes' if st.session_state.get('override_risk_lock') else 'No'}")
                 st.write(f"**Daily PnL**: ${today_bot_pnl:.2f}")
-          
+        
     # =======================
     # TAB 3: MANUAL TRADING
     # =======================
@@ -5332,7 +5722,8 @@ def main():
                     display_df["timestamp"] = pd.to_datetime(display_df["timestamp"], errors='coerce')
                     display_df = display_df.sort_values("timestamp", ascending=False)
                 
-                st.dataframe(display_df.head(50), use_container_width=True)
+                # Use the new render_historical_trades function instead of simple dataframe display
+                render_historical_trades(display_df, max_initial=50, key="filtered_trades")
                 
                 # Manual trading stats
                 st.subheader("📊 Manual Trading Stats")
@@ -5385,17 +5776,17 @@ def main():
             with col1:
                 # PnL comparison bar chart
                 fig = px.bar(comparison_df, x="Type", y="Total PnL", 
-                           title="Total PnL Comparison",
-                           color="Type",
-                           color_discrete_map={"Bot": "#00fff5", "Manual": "#ffaa00"})
+                        title="Total PnL Comparison",
+                        color="Type",
+                        color_discrete_map={"Bot": "#00fff5", "Manual": "#ffaa00"})
                 st.plotly_chart(fig, use_container_width=True)
             
             with col2:
                 # Win rate comparison
                 fig = px.bar(comparison_df, x="Type", y="Win Rate",
-                           title="Win Rate Comparison (%)",
-                           color="Type",
-                           color_discrete_map={"Bot": "#00fff5", "Manual": "#ffaa00"})
+                        title="Win Rate Comparison (%)",
+                        color="Type",
+                        color_discrete_map={"Bot": "#00fff5", "Manual": "#ffaa00"})
                 st.plotly_chart(fig, use_container_width=True)
         
     # =======================
@@ -5422,6 +5813,8 @@ def main():
                 render_crypto_news()
             elif st.session_state.current_tool == "📡 On-Chain Data":
                 render_enhanced_onchain_data()
+            elif st.session_state.current_tool == "Market Scanner":  # Added the Market Scanner condition
+                render_market_scanner()
             else:
                 # Default analytics view
                 analytics_tabs = st.tabs(["📊 Growth Curve", "🔍 Tool Selection", "📈 Key Metrics"])
@@ -5482,6 +5875,8 @@ def main():
                             st.session_state.current_tool = "📈 Performance Trends"
                         if st.button("📊 Advanced Analytics", use_container_width=True):
                             st.session_state.current_tool = "📊 Advanced Analytics"
+                        if st.button("🔬 Market Scanner", use_container_width=True):  # Added Market Scanner button
+                            st.session_state.current_tool = "Market Scanner"
                     
                     with col2:
                         st.markdown("### 📡 Data Sources")
