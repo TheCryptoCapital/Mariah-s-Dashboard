@@ -1,0 +1,7 @@
+ requirements-optional.txt
+ pyttsx3>=2.90
+openai>=1.0.0
+SpeechRecognition>=3.8.0
+streamlit-autorefresh>=0.0.1
+scikit-learn>=1.0.0
+joblib>=1.1.0

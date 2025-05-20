@@ -1,0 +1,4 @@
+timestamp,symbol,side,qty,entry_price,take_profit,stop_loss
+2025-04-28 10:30:00,BTCUSDT,Buy,0.01,63000,64260,62370
+2025-04-29 14:45:00,ETHUSDT,Sell,0.5,3200,3136,3232
+
